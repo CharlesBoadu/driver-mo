@@ -98,23 +98,25 @@ function LoginPage() {
     });
     setLoading(false);
 
-    if (response?.status === "GS200") {
+    if (response?.code === "GS200") {
       toast({
         title: "Welcome Back!",
         description: "Successfully logged in to your Driver Mo account.",
       });
       const onboardingData = {
         vehicleRegistration: "DEMO-001",
-        driverName: "Demo Driver",
-        contactNumber: "020111222",
-        vehicleType: "private_saloon",
-        region: "Greater Accra",
-        location: "Accra",
+        driverName:
+          response?.data?.first_name + " " + response?.data?.last_name,
+        contactNumber: response?.data?.msisdn || "N/A",
+        vehicleType: response?.data?.product?.item_type || "N/A",
+        region: response?.data?.region || "N/A",
+        location: response?.data?.location || "N/A",
       };
       localStorage.setItem(
         "driverMoOnboarding",
         JSON.stringify(onboardingData)
       );
+      localStorage.setItem("clientDetails", JSON.stringify(response?.data));
 
       setTimeout(() => {
         navigate("/dashboard");
