@@ -5,10 +5,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar, DollarSign, Home, User } from "lucide-react";
+import {
+  Banknote,
+  Calendar,
+  CreditCard,
+  DollarSign,
+  Home,
+  Type,
+  User,
+} from "lucide-react";
 import Pagination from "../ui/pagination";
+import DropdownSearch from "../ui/dropdownsearch";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 function Pay() {
   const [payOption, setPayOption] = useState("");
   const [stepOne, setStepOne] = useState(true);
@@ -82,6 +91,7 @@ function Pay() {
   const [checkAll, setCheckAll] = useState(true);
   const [fetchedAssuredLives, setFetchedAssuredLives] = useState([]);
   const [assuredLives, setAssuredLives] = useState(null);
+  const [clientDetails, setClientDetails] = useState(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
@@ -142,6 +152,50 @@ function Pay() {
       description: "Thank you for choosing us!",
     });
   };
+
+  const handleResetCheckValues = () => {
+    setCheckValues({
+      ...checkValues,
+      sender_account_provider_name: "",
+      sender_account_number: "",
+      sender_account_holder_name: "",
+      bank_name: "",
+      account_number: "",
+      check_no: "",
+      receipt_number: "",
+      account_holder: "",
+    });
+  };
+
+  const handleResetMomoValues = () => {
+    setMomoValues({
+      ...momoValues,
+      sender_account_provider_name: "",
+      sender_account_number: "",
+      mobile_number: "",
+      network_provider: "",
+      reference: "",
+      account_holder: "",
+    });
+  };
+
+  const handleResetBankValues = () => {
+    setBankValues({
+      ...bankValues,
+      sender_account_provider_name: "",
+      sender_account_number: "",
+      sender_account_holder_name: "",
+      bank_name: "",
+      account_number: "",
+      receipt_number: "",
+      account_holder: "",
+    });
+  };
+
+  useEffect(() => {
+    const clientDetails = JSON.parse(localStorage.getItem("clientDetails"));
+    setClientDetails(clientDetails);
+  }, []);
 
   return (
     <div>
@@ -204,10 +258,12 @@ function Pay() {
                         height={250}
                       /> */}
                       <div className="text-center font-bold text-lg">
-                        Jerry Quaynor
+                        {clientDetails?.first_name +
+                          " " +
+                          clientDetails?.last_name}
                       </div>
                       <div className="text-center font-bold text-lg">
-                        EDM-004394
+                        {clientDetails?.policy_holder_member_number || "N/A"}
                       </div>
                     </div>
                     {policyType.toLowerCase() == "group" && (
@@ -244,13 +300,14 @@ function Pay() {
                               <div className="md:w-[10vw] 2xl:w-[7vw]">
                                 Total Amount:
                               </div>
-                              <span className="text-3xl font-semibold">
+                              <div></div>
+                              {/* <span className="text-3xl font-semibold">
                                 GHS{" "}
                                 {bankValues?.total_amount_paid ||
                                   amount *
                                     getPremiumFrequency() *
                                     isCheckboxChecked.length}
-                              </span>
+                              </span> */}
                             </div>
                           </div>
                           <div>
@@ -389,28 +446,24 @@ function Pay() {
                             </tbody>
                           </table>
                         </div>
-                        <Pagination
+                        {/* <Pagination
                           handleNextPage={handleNextPage}
                           handlePrevPage={handlePrevPage}
                           currentPage={currentPage}
                           setCurrentPage={setCurrentPage}
-                        />
+                        /> */}
                       </div>
                     )}
                     {policyType.toLowerCase() == "embedded" && (
-                      <div>
-                        <div className="my-4 flex justify-between">
+                      <div className="">
+                        <div className="my-4">
                           <div className="space-y-2">
                             <div className="flex flex-row">
-                              <div className="md:w-[10vw] 2xl:w-[7vw]">
-                                Date:
-                              </div>
+                              <div className="w-[30%]">Date:</div>
                               <span>{new Date().toLocaleDateString()}</span>
                             </div>
                             <div className="flex flex-row">
-                              <div className="my-auto md:w-[10vw] 2xl:w-[7vw]">
-                                Transaction ID:
-                              </div>
+                              <div className="w-[30%]">Transaction ID:</div>
                               <span>
                                 {loading ? (
                                   <div className="flex items-center justify-center">
@@ -428,59 +481,84 @@ function Pay() {
                               </span>
                             </div>
                             <div className="flex flex-row">
-                              <div className="md:w-[10vw] 2xl:w-[7vw]">
+                              <div className="w-[30%] my-auto">
                                 Total Amount:
                               </div>
-                              <span className="text-3xl font-semibold">
+                              <div className="w-[50%]">
+                                <input
+                                  type="text"
+                                  className="rounded-lg border-[1px] border-gray p-2 w-full"
+                                  placeholder="Enter amount"
+                                  // onChange={handleSearch}
+                                />
+                              </div>
+                              {/* <span className="text-3xl font-semibold">
                                 GHS{" "}
                                 {bankValues?.total_amount_paid ||
                                   amount *
                                     getPremiumFrequency() *
                                     isCheckboxChecked.length}
-                              </span>
+                              </span> */}
                             </div>
                             {/* Total Units  */}
-                            <div>
+                            <div className="flex flex-row">
                               <label
                                 htmlFor="totalUnits"
-                                className="block flex flex-row text-sm font-medium text-gray-700"
+                                className="block flex flex-row w-[30%] my-auto"
                               >
                                 <User /> Total Units
                               </label>
-                              <div>
+                              <div className="w-[50%]">
                                 <input
                                   type="text"
                                   name="totalUnits"
-                                  placeholder="Enter totalUnits"
+                                  placeholder="Enter total units"
                                   id="totalUnits"
-                                  className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-200 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                  disabled
-                                  value={bankValues.account_number}
-                                  onChange={(e) =>
-                                    setBankValues({
-                                      ...bankValues,
-                                      account_number: e.target.value,
-                                    })
-                                  }
+                                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                                  // disabled
+                                  // value={bankValues.account_number}
+                                  // onChange={(e) =>
+                                  //   setBankValues({
+                                  //     ...bankValues,
+                                  //     account_number: e.target.value,
+                                  //   })
+                                  // }
                                 />{" "}
                               </div>
                             </div>
                             {/* Location  */}
-                            <div>
+                            <div className="flex flex-row">
                               <label
                                 htmlFor="location"
-                                className="block flex flex-row text-sm font-medium text-gray-700"
+                                className="block flex flex-row w-[30%] my-auto"
                               >
                                 <User /> Location
                               </label>
-                              <div>
-                                <input
+                              <div className="w-[50%]">
+                                <DropdownSearch
+                                  options={[
+                                    {
+                                      unique_id: "1",
+                                      name: "Accra",
+                                    },
+                                    {
+                                      unique_id: "2",
+                                      name: "Kumasi",
+                                    },
+                                  ]?.map((data) => ({
+                                    id: data.unique_id,
+                                    label: data.name,
+                                  }))}
+                                  // onOptionSelect={handleOptionSelect}
+                                  placeholder={"Location"}
+                                />
+                                {/* <input
                                   type="text"
                                   name="location"
                                   placeholder="Enter Location"
                                   id="location"
-                                  className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-200 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                  disabled
+                                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                                  // disabled
                                   value={bankValues.account_number}
                                   onChange={(e) =>
                                     setBankValues({
@@ -488,25 +566,41 @@ function Pay() {
                                       account_number: e.target.value,
                                     })
                                   }
-                                />{" "}
+                                />{" "} */}
                               </div>
                             </div>
                             {/* Attendant ID/Name  */}
-                            <div>
+                            <div className="flex flex-row">
                               <label
                                 htmlFor="attendant"
-                                className="block flex flex-row text-sm font-medium text-gray-700"
+                                className="block flex w-[30%] flex-row my-auto"
                               >
-                                <User /> Attendant ID/Name
+                                <User /> Attendant ID / Name
                               </label>
-                              <div>
-                                <input
+                              <div className="w-[50%]">
+                                <DropdownSearch
+                                  options={[
+                                    {
+                                      unique_id: "1",
+                                      name: "Mark Larbi",
+                                    },
+                                    {
+                                      unique_id: "2",
+                                      name: "Aisha Danku",
+                                    },
+                                  ]?.map((data) => ({
+                                    id: data.unique_id,
+                                    label: data.name,
+                                  }))}
+                                  // onOptionSelect={handleOptionSelect}
+                                  placeholder={"Select Attendant name"}
+                                />
+                                {/* <input
                                   type="text"
                                   name="attendant"
                                   placeholder="Enter attendant"
                                   id="attendant"
-                                  className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-200 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                  disabled
+                                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
                                   value={bankValues.account_number}
                                   onChange={(e) =>
                                     setBankValues({
@@ -514,7 +608,7 @@ function Pay() {
                                       account_number: e.target.value,
                                     })
                                   }
-                                />{" "}
+                                />{" "} */}
                               </div>
                             </div>
                           </div>
@@ -564,8 +658,9 @@ function Pay() {
                             )}
                           </div>
                         </div>
+
                         {/* Table  */}
-                        <div className="overflow-auto mb-5">
+                        {/* <div className="overflow-auto mb-5">
                           <table className="w-full border-[1px]">
                             <thead>
                               <tr>
@@ -669,13 +764,13 @@ function Pay() {
                               )}
                             </tbody>
                           </table>
-                        </div>
-                        <Pagination
+                        </div> */}
+                        {/* <Pagination
                           handleNextPage={handleNextPage}
                           handlePrevPage={handlePrevPage}
                           currentPage={currentPage}
                           setCurrentPage={setCurrentPage}
-                        />
+                        /> */}
                       </div>
                     )}
                     {policyType.toLowerCase() == "retail" && (
@@ -893,7 +988,7 @@ function Pay() {
                 )}
                 {stepTwo && (
                   <div className="border-[1px] rounded-lg shadow-md w-[70%] mx-auto p-2">
-                    <div className="px-4">
+                    {/* <div className="px-4">
                       <button
                         type="button"
                         className="rounded-lg bg-black text-white px-10 py-2"
@@ -904,7 +999,7 @@ function Pay() {
                       >
                         Back
                       </button>
-                    </div>
+                    </div> */}
                     <div className="space-y-5 p-5">
                       {/* Select Mode of Payment */}
                       <div>
@@ -912,7 +1007,7 @@ function Pay() {
                           htmlFor="contactPerson"
                           className="block flex flex-row text-sm font-medium text-gray-700"
                         >
-                          <DollarSign />
+                          {/* <Paymem /> */}
                           Select Payment Mode
                         </label>
                         <select
@@ -923,1038 +1018,32 @@ function Pay() {
                               e.target.value === "Bank Deposit / Cash" ||
                               e.target.value === "Bank Transfer"
                             ) {
-                              setCheckValues({
-                                ...checkValues,
-                                sender_account_provider_name: "",
-                                sender_account_number: "",
-                                sender_account_holder_name: "",
-                                bank_name: "",
-                                account_number: "",
-                                check_no: "",
-                                receipt_number: "",
-                                account_holder: "",
-                              });
-                              setMomoValues({
-                                ...momoValues,
-                                sender_account_provider_name: "",
-                                sender_account_number: "",
-                                mobile_number: "",
-                                network_provider: "",
-                                reference: "",
-                                account_holder: "",
-                              });
+                              handleResetCheckValues();
+                              handleResetMomoValues();
                             } else if (e.target.value === "Momo") {
-                              setBankValues({
-                                ...bankValues,
-                                sender_account_provider_name: "",
-                                sender_account_number: "",
-                                sender_account_holder_name: "",
-                                bank_name: "",
-                                account_number: "",
-                                receipt_number: "",
-                                account_holder: "",
-                              });
-                              setCheckValues({
-                                ...checkValues,
-                                sender_account_provider_name: "",
-                                sender_account_number: "",
-                                sender_account_holder_name: "",
-                                bank_name: "",
-                                account_number: "",
-                                check_no: "",
-                                receipt_number: "",
-                                account_holder: "",
-                              });
+                              handleResetBankValues();
+                              handleResetCheckValues();
                             } else if (e.target.value === "Cheque") {
-                              setBankValues({
-                                ...bankValues,
-                                sender_account_provider_name: "",
-                                sender_account_number: "",
-                                sender_account_holder_name: "",
-                                bank_name: "",
-                                account_number: "",
-                                receipt_number: "",
-                                account_holder: "",
-                              });
-                              setMomoValues({
-                                ...momoValues,
-                                sender_account_provider_name: "",
-                                sender_account_number: "",
-                                mobile_number: "",
-                                network_provider: "",
-                                reference: "",
-                                account_holder: "",
-                              });
+                              handleResetBankValues();
+                              handleResetMomoValues();
                             }
                           }}
                         >
                           <option value="">Select Payment Mode</option>
-                          <option value="Bank Deposit / Cash">
+                          {/* <option value="Bank Deposit / Cash">
                             Bank Deposit / Cash
                           </option>
-                          <option value="Bank Transfer">Bank Transfer</option>
-                          <option value="Cheque">Cheque</option>
+                          <option value="Bank Transfer">Bank Transfer</option> */}
+                          <option value="Card">Card Payment</option>
                           <option value="Momo">Momo</option>
                         </select>
                       </div>
 
-                      {/* Bank Payment */}
-                      {(paymentMode === "Bank Deposit / Cash" ||
-                        paymentMode === "Bank Transfer") && (
-                        <div className="space-y-4">
-                          {/* Account Selection  */}
-                          <div>
-                            <label
-                              htmlFor="accountSelection"
-                              className="block flex flex-row text-sm font-medium text-gray-700"
-                            >
-                              <DollarSign />
-                              Select Account to use
-                            </label>
-                            <select
-                              className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                              onChange={(e) => {
-                                let selectedAccount = fetchedAccounts?.find(
-                                  (account) =>
-                                    account?.account_name === e.target.value
-                                );
-                                // console.log('seleted', selectedAccount);
-                                setBankValues({
-                                  ...bankValues,
-                                  account_id: selectedAccount?.id,
-                                  account_holder: selectedAccount?.account_name,
-                                  bank_name: selectedAccount?.bank,
-                                  account_number:
-                                    selectedAccount?.account_number,
-                                });
-                              }}
-                            >
-                              <option value="">Select Account</option>
-                              {fetchedAccounts?.map((account, index) => (
-                                <>
-                                  {/* {account?.type === 'bank' && ( */}
-                                  <option
-                                    key={index}
-                                    value={account?.account_name}
-                                  >
-                                    {account?.account_name}
-                                  </option>
-                                  {/* )} */}
-                                </>
-                              ))}
-                            </select>
-                          </div>
-
-                          {/* Bank Name  */}
-                          <div>
-                            <label
-                              htmlFor="bankName"
-                              className="block flex flex-row text-sm font-medium text-gray-700"
-                            >
-                              <Home /> Bank Name
-                            </label>
-                            <select
-                              className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-200 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                              value={bankValues.bank_name}
-                              disabled
-                              onChange={(e) =>
-                                setBankValues({
-                                  ...bankValues,
-                                  bank_name: e.target.value,
-                                })
-                              }
-                            >
-                              <option value="" disabled>
-                                Select Bank
-                              </option>
-                              <option value="Absa Bank Ghana Limited">
-                                Absa Bank Ghana Limited
-                              </option>
-                              <option value="Access Bank Ghana Plc">
-                                Access Bank Ghana Plc
-                              </option>
-                              <option value="Agricultural Development Bank of Ghana">
-                                Agricultural Development Bank of Ghana
-                              </option>
-                              <option value="Bank of Africa Ghana Limited">
-                                Bank of Africa Ghana Limited
-                              </option>
-                              <option value="CalBank Limited">
-                                CalBank Limited
-                              </option>
-                              <option value="Consolidated Bank Ghana Limited">
-                                Consolidated Bank Ghana Limited
-                              </option>
-                              <option value="Ecobank Ghana Limited">
-                                Ecobank Ghana Limited
-                              </option>
-                              <option value="FBN Bank Ghana Limited">
-                                FBN Bank Ghana Limited
-                              </option>
-                              <option value="Fidelity Bank Ghana Limited">
-                                Fidelity Bank Ghana Limited
-                              </option>
-                              <option value="First Atlantic Bank Limited">
-                                First Atlantic Bank Limited
-                              </option>
-                              <option value="First National Bank Ghana">
-                                First National Bank Ghana
-                              </option>
-                              <option value="GCB Bank Limited">
-                                GCB Bank Limited
-                              </option>
-                              <option value="Guaranty Trust Bank Ghana Limited">
-                                Guaranty Trust Bank Ghana Limited
-                              </option>
-                              <option value="National Investment Bank Limited">
-                                National Investment Bank Limited
-                              </option>
-                              <option value="OmniBSIC Bank Ghana Limited">
-                                OmniBSIC Bank Ghana Limited
-                              </option>
-                              <option value="Prudential Bank Limited">
-                                Prudential Bank Limited
-                              </option>
-                              <option value="Republic Bank Ghana Limited">
-                                Republic Bank Ghana Limited
-                              </option>
-                              <option value="Société Générale Ghana Limited">
-                                Société Générale Ghana Limited
-                              </option>
-                              <option value="Stanbic Bank Ghana Limited">
-                                Stanbic Bank Ghana Limited
-                              </option>
-                              <option value="Standard Chartered Bank Ghana Limited">
-                                Standard Chartered Bank Ghana Limited
-                              </option>
-                              <option value="United Bank for Africa Ghana Limited">
-                                United Bank for Africa Ghana Limited
-                              </option>
-                              <option value="Universal Merchant Bank Limited">
-                                Universal Merchant Bank Limited
-                              </option>
-                              <option value="Zenith Bank Ghana Limited.">
-                                Zenith Bank Ghana Limited
-                              </option>
-                              <option value="None">None</option>
-                            </select>
-                          </div>
-
-                          {/* Account holder */}
-                          <div>
-                            <label
-                              htmlFor="accountHolder"
-                              className="block flex flex-row text-sm font-medium text-gray-700"
-                            >
-                              <User /> Account Holder
-                            </label>
-                            <div>
-                              <input
-                                type="text"
-                                name="accountHolder"
-                                placeholder="Enter Account holder"
-                                id="accountHolder"
-                                className={`mt-1 block w-full rounded-md border border-gray-300 bg-gray-200 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm`}
-                                value={bankValues.account_holder}
-                                disabled
-                                onChange={(e) =>
-                                  setBankValues({
-                                    ...bankValues,
-                                    account_holder: e.target.value,
-                                  })
-                                }
-                              />{" "}
-                            </div>
-                          </div>
-
-                          {/* Account Number  */}
-                          <div>
-                            <label
-                              htmlFor="accountNumber"
-                              className="block flex flex-row text-sm font-medium text-gray-700"
-                            >
-                              <User /> Account Number
-                            </label>
-                            <div>
-                              <input
-                                type="text"
-                                name="accountNumber"
-                                placeholder="Enter Account Number"
-                                id="accountNumber"
-                                className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-200 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                disabled
-                                value={bankValues.account_number}
-                                onChange={(e) =>
-                                  setBankValues({
-                                    ...bankValues,
-                                    account_number: e.target.value,
-                                  })
-                                }
-                              />{" "}
-                            </div>
-                          </div>
-
-                          {/* Sender Bank Name  */}
-                          <div>
-                            <label
-                              htmlFor="bankName"
-                              className="block flex flex-row text-sm font-medium text-gray-700"
-                            >
-                              <Home /> Sender Bank Name
-                            </label>
-                            <select
-                              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                              value={bankValues.sender_account_provider_name}
-                              // disabled
-                              onChange={(e) =>
-                                setBankValues({
-                                  ...bankValues,
-                                  sender_account_provider_name: e.target.value,
-                                })
-                              }
-                            >
-                              <option value="" disabled>
-                                Select Bank
-                              </option>
-                              <option value="Absa Bank Ghana Limited">
-                                Absa Bank Ghana Limited
-                              </option>
-                              <option value="Access Bank Ghana Plc">
-                                Access Bank Ghana Plc
-                              </option>
-                              <option value="Agricultural Development Bank of Ghana">
-                                Agricultural Development Bank of Ghana
-                              </option>
-                              <option value="Bank of Africa Ghana Limited">
-                                Bank of Africa Ghana Limited
-                              </option>
-                              <option value="CalBank Limited">
-                                CalBank Limited
-                              </option>
-                              <option value="Consolidated Bank Ghana Limited">
-                                Consolidated Bank Ghana Limited
-                              </option>
-                              <option value="Ecobank Ghana Limited">
-                                Ecobank Ghana Limited
-                              </option>
-                              <option value="FBN Bank Ghana Limited">
-                                FBN Bank Ghana Limited
-                              </option>
-                              <option value="Fidelity Bank Ghana Limited">
-                                Fidelity Bank Ghana Limited
-                              </option>
-                              <option value="First Atlantic Bank Limited">
-                                First Atlantic Bank Limited
-                              </option>
-                              <option value="First National Bank Ghana">
-                                First National Bank Ghana
-                              </option>
-                              <option value="GCB Bank Limited">
-                                GCB Bank Limited
-                              </option>
-                              <option value="Guaranty Trust Bank Ghana Limited">
-                                Guaranty Trust Bank Ghana Limited
-                              </option>
-                              <option value="National Investment Bank Limited">
-                                National Investment Bank Limited
-                              </option>
-                              <option value="OmniBSIC Bank Ghana Limited">
-                                OmniBSIC Bank Ghana Limited
-                              </option>
-                              <option value="Prudential Bank Limited">
-                                Prudential Bank Limited
-                              </option>
-                              <option value="Republic Bank Ghana Limited">
-                                Republic Bank Ghana Limited
-                              </option>
-                              <option value="Société Générale Ghana Limited">
-                                Société Générale Ghana Limited
-                              </option>
-                              <option value="Stanbic Bank Ghana Limited">
-                                Stanbic Bank Ghana Limited
-                              </option>
-                              <option value="Standard Chartered Bank Ghana Limited">
-                                Standard Chartered Bank Ghana Limited
-                              </option>
-                              <option value="United Bank for Africa Ghana Limited">
-                                United Bank for Africa Ghana Limited
-                              </option>
-                              <option value="Universal Merchant Bank Limited">
-                                Universal Merchant Bank Limited
-                              </option>
-                              <option value="Zenith Bank Ghana Limited.">
-                                Zenith Bank Ghana Limited
-                              </option>
-                              <option value="None">None</option>
-                            </select>
-                          </div>
-
-                          {/* Sender Account holder  */}
-                          <div>
-                            <label
-                              htmlFor="accountHolder"
-                              className="block flex flex-row text-sm font-medium text-gray-700"
-                            >
-                              <User /> Sender Account Holder
-                            </label>
-                            <div>
-                              <input
-                                type="text"
-                                name="accountHolder"
-                                placeholder="Enter sender Account holder"
-                                id="accountHolder"
-                                className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm ${
-                                  bankValues?.sender_account_provider_name ===
-                                  "None"
-                                    ? "bg-gray-200"
-                                    : "bg-white"
-                                }`}
-                                value={bankValues.sender_account_holder_name}
-                                disabled={
-                                  bankValues?.sender_account_provider_name ===
-                                  "None"
-                                }
-                                onChange={(e) =>
-                                  setBankValues({
-                                    ...bankValues,
-                                    sender_account_holder_name: e.target.value,
-                                  })
-                                }
-                              />{" "}
-                            </div>
-                          </div>
-
-                          {/* Sender Account Number  */}
-                          <div>
-                            <label
-                              htmlFor="accountNumber"
-                              className="block flex flex-row text-sm font-medium text-gray-700"
-                            >
-                              <User /> Sender Account Number
-                            </label>
-                            <div>
-                              <input
-                                type="text"
-                                name="accountNumber"
-                                placeholder="Enter sender Account Number"
-                                id="accountNumber"
-                                className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm ${
-                                  bankValues?.sender_account_provider_name ===
-                                  "None"
-                                    ? "bg-gray-200"
-                                    : "bg-white"
-                                }`}
-                                disabled={
-                                  bankValues?.sender_account_provider_name ===
-                                  "None"
-                                }
-                                value={bankValues.sender_account_number}
-                                onChange={(e) =>
-                                  setBankValues({
-                                    ...bankValues,
-                                    sender_account_number: e.target.value,
-                                  })
-                                }
-                              />{" "}
-                            </div>
-                          </div>
-
-                          {/* Receipt Number  */}
-                          <div>
-                            <label
-                              htmlFor="receiptNumber"
-                              className="block flex flex-row text-sm font-medium text-gray-700"
-                            >
-                              <User /> Receipt Number
-                            </label>
-                            <div>
-                              <input
-                                type="text"
-                                name="receiptNumber"
-                                placeholder="Enter Receipt Number"
-                                id="receiptNumber"
-                                className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                value={bankValues.receipt_number}
-                                onChange={(e) =>
-                                  setBankValues({
-                                    ...bankValues,
-                                    receipt_number: e.target.value,
-                                  })
-                                }
-                              />{" "}
-                            </div>
-                          </div>
-
-                          {/* Amount Paid */}
-                          <div>
-                            <label
-                              htmlFor="amountPaid"
-                              className="block flex flex-row text-sm font-medium text-gray-700"
-                            >
-                              <User /> Amount Paid
-                            </label>
-                            <div>
-                              <input
-                                type="number"
-                                name="amountPaid"
-                                placeholder="Enter Amount Paid"
-                                id="amountPaid"
-                                disabled
-                                className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                value={bankValues.total_amount_paid}
-                                // onChange={(e) =>
-                                //     setBankValues({
-                                //         ...bankValues,
-                                //         amount_paid: e.target.value,
-                                //     })
-                                // }
-                              />{" "}
-                            </div>
-                          </div>
-
-                          {/* Transaction Date  */}
-                          <div>
-                            <label
-                              htmlFor="date"
-                              className="block flex flex-row text-sm font-medium text-gray-700"
-                            >
-                              <Calendar /> Transaction Date & Time
-                            </label>
-                            <div>
-                              <input
-                                type="datetime-local"
-                                name="date"
-                                placeholder="Select Date of Payment"
-                                id="date"
-                                className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                value={bankValues.date_paid}
-                                onChange={(e) =>
-                                  setBankValues({
-                                    ...bankValues,
-                                    date_paid: e.target.value,
-                                  })
-                                }
-                              />{" "}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Cheque Payment */}
-                      {paymentMode === "Cheque" && (
-                        <div className="space-y-4">
-                          {/* Account Selection  */}
-                          <div>
-                            <label
-                              htmlFor="accountSelection"
-                              className="block flex flex-row text-sm font-medium text-gray-700"
-                            >
-                              <DollarSign />
-                              Select Account to use
-                            </label>
-                            <select
-                              className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                              onChange={(e) => {
-                                let selectedAccount = fetchedAccounts?.find(
-                                  (account) =>
-                                    account?.account_name === e.target.value
-                                );
-                                // console.log('seleted', selectedAccount);
-                                setCheckValues({
-                                  ...checkValues,
-                                  account_id: selectedAccount?.id,
-                                  account_holder: selectedAccount?.account_name,
-                                  bank_name: selectedAccount?.bank,
-                                  account_number:
-                                    selectedAccount?.account_number,
-                                });
-                              }}
-                            >
-                              <option value="">Select Account</option>
-                              {fetchedAccounts?.map((account, index) => (
-                                <>
-                                  {/* {account?.type === 'bank' && ( */}
-                                  <option
-                                    key={index}
-                                    value={account?.account_name}
-                                  >
-                                    {account?.account_name}
-                                  </option>
-                                  {/* )} */}
-                                </>
-                              ))}
-                            </select>
-                          </div>
-
-                          {/* Bank Name  */}
-                          <div>
-                            <label
-                              htmlFor="bankName"
-                              className="block flex flex-row text-sm font-medium text-gray-700"
-                            >
-                              <Home /> Bank Name
-                            </label>
-                            <select
-                              className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-200 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                              disabled
-                              value={checkValues.bank_name}
-                              onChange={(e) =>
-                                setCheckValues({
-                                  ...checkValues,
-                                  bank_name: e.target.value,
-                                })
-                              }
-                            >
-                              <option value="" disabled>
-                                Select Bank
-                              </option>
-                              <option value="Absa Bank Ghana Limited">
-                                Absa Bank Ghana Limited
-                              </option>
-                              <option value="Access Bank Ghana Plc">
-                                Access Bank Ghana Plc
-                              </option>
-                              <option value="Agricultural Development Bank of Ghana">
-                                Agricultural Development Bank of Ghana
-                              </option>
-                              <option value="Bank of Africa Ghana Limited">
-                                Bank of Africa Ghana Limited
-                              </option>
-                              <option value="CalBank Limited">
-                                CalBank Limited
-                              </option>
-                              <option value="Consolidated Bank Ghana Limited">
-                                Consolidated Bank Ghana Limited
-                              </option>
-                              <option value="Ecobank Ghana Limited">
-                                Ecobank Ghana Limited
-                              </option>
-                              <option value="FBN Bank Ghana Limited">
-                                FBN Bank Ghana Limited
-                              </option>
-                              <option value="Fidelity Bank Ghana Limited">
-                                Fidelity Bank Ghana Limited
-                              </option>
-                              <option value="First Atlantic Bank Limited">
-                                First Atlantic Bank Limited
-                              </option>
-                              <option value="First National Bank Ghana">
-                                First National Bank Ghana
-                              </option>
-                              <option value="GCB Bank Limited">
-                                GCB Bank Limited
-                              </option>
-                              <option value="Guaranty Trust Bank Ghana Limited">
-                                Guaranty Trust Bank Ghana Limited
-                              </option>
-                              <option value="National Investment Bank Limited">
-                                National Investment Bank Limited
-                              </option>
-                              <option value="OmniBSIC Bank Ghana Limited">
-                                OmniBSIC Bank Ghana Limited
-                              </option>
-                              <option value="Prudential Bank Limited">
-                                Prudential Bank Limited
-                              </option>
-                              <option value="Republic Bank Ghana Limited">
-                                Republic Bank Ghana Limited
-                              </option>
-                              <option value="Société Générale Ghana Limited">
-                                Société Générale Ghana Limited
-                              </option>
-                              <option value="Stanbic Bank Ghana Limited">
-                                Stanbic Bank Ghana Limited
-                              </option>
-                              <option value="Standard Chartered Bank Ghana Limited">
-                                Standard Chartered Bank Ghana Limited
-                              </option>
-                              <option value="United Bank for Africa Ghana Limited">
-                                United Bank for Africa Ghana Limited
-                              </option>
-                              <option value="Universal Merchant Bank Limited">
-                                Universal Merchant Bank Limited
-                              </option>
-                              <option value="Zenith Bank Ghana Limited.">
-                                Zenith Bank Ghana Limited
-                              </option>
-                            </select>
-                          </div>
-
-                          {/* Account holder */}
-                          <div>
-                            <label
-                              htmlFor="accountHolder"
-                              className="block flex flex-row text-sm font-medium text-gray-700"
-                            >
-                              <User /> Account Holder
-                            </label>
-                            <div>
-                              <input
-                                type="text"
-                                name="accountHolder"
-                                placeholder="Enter Account holder"
-                                id="accountHolder"
-                                className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-200 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                disabled
-                                value={checkValues.account_holder}
-                                onChange={(e) =>
-                                  setCheckValues({
-                                    ...checkValues,
-                                    account_holder: e.target.value,
-                                  })
-                                }
-                              />{" "}
-                            </div>
-                          </div>
-
-                          {/* Account Number  */}
-                          <div>
-                            <label
-                              htmlFor="accountNumber"
-                              className="block flex flex-row text-sm font-medium text-gray-700"
-                            >
-                              <User /> Account Number
-                            </label>
-                            <div>
-                              <input
-                                type="text"
-                                name="accountNumber"
-                                placeholder="Enter Account Number"
-                                id="accountNumber"
-                                className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-200 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                disabled
-                                value={checkValues.account_number}
-                                onChange={(e) =>
-                                  setCheckValues({
-                                    ...checkValues,
-                                    account_number: e.target.value,
-                                  })
-                                }
-                              />{" "}
-                            </div>
-                          </div>
-
-                          {/* Sender Bank Name  */}
-                          <div>
-                            <label
-                              htmlFor="bankName"
-                              className="block flex flex-row text-sm font-medium text-gray-700"
-                            >
-                              <Home /> Sender Bank Name
-                            </label>
-                            <select
-                              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                              value={checkValues.sender_account_provider_name}
-                              // disabled
-                              onChange={(e) =>
-                                setCheckValues({
-                                  ...checkValues,
-                                  sender_account_provider_name: e.target.value,
-                                })
-                              }
-                            >
-                              <option value="" disabled>
-                                Select Bank
-                              </option>
-                              <option value="Absa Bank Ghana Limited">
-                                Absa Bank Ghana Limited
-                              </option>
-                              <option value="Access Bank Ghana Plc">
-                                Access Bank Ghana Plc
-                              </option>
-                              <option value="Agricultural Development Bank of Ghana">
-                                Agricultural Development Bank of Ghana
-                              </option>
-                              <option value="Bank of Africa Ghana Limited">
-                                Bank of Africa Ghana Limited
-                              </option>
-                              <option value="CalBank Limited">
-                                CalBank Limited
-                              </option>
-                              <option value="Consolidated Bank Ghana Limited">
-                                Consolidated Bank Ghana Limited
-                              </option>
-                              <option value="Ecobank Ghana Limited">
-                                Ecobank Ghana Limited
-                              </option>
-                              <option value="FBN Bank Ghana Limited">
-                                FBN Bank Ghana Limited
-                              </option>
-                              <option value="Fidelity Bank Ghana Limited">
-                                Fidelity Bank Ghana Limited
-                              </option>
-                              <option value="First Atlantic Bank Limited">
-                                First Atlantic Bank Limited
-                              </option>
-                              <option value="First National Bank Ghana">
-                                First National Bank Ghana
-                              </option>
-                              <option value="GCB Bank Limited">
-                                GCB Bank Limited
-                              </option>
-                              <option value="Guaranty Trust Bank Ghana Limited">
-                                Guaranty Trust Bank Ghana Limited
-                              </option>
-                              <option value="National Investment Bank Limited">
-                                National Investment Bank Limited
-                              </option>
-                              <option value="OmniBSIC Bank Ghana Limited">
-                                OmniBSIC Bank Ghana Limited
-                              </option>
-                              <option value="Prudential Bank Limited">
-                                Prudential Bank Limited
-                              </option>
-                              <option value="Republic Bank Ghana Limited">
-                                Republic Bank Ghana Limited
-                              </option>
-                              <option value="Société Générale Ghana Limited">
-                                Société Générale Ghana Limited
-                              </option>
-                              <option value="Stanbic Bank Ghana Limited">
-                                Stanbic Bank Ghana Limited
-                              </option>
-                              <option value="Standard Chartered Bank Ghana Limited">
-                                Standard Chartered Bank Ghana Limited
-                              </option>
-                              <option value="United Bank for Africa Ghana Limited">
-                                United Bank for Africa Ghana Limited
-                              </option>
-                              <option value="Universal Merchant Bank Limited">
-                                Universal Merchant Bank Limited
-                              </option>
-                              <option value="Zenith Bank Ghana Limited.">
-                                Zenith Bank Ghana Limited
-                              </option>
-                              <option value="None">None</option>
-                            </select>
-                          </div>
-
-                          {/* Sender Account holder  */}
-                          <div>
-                            <label
-                              htmlFor="accountHolder"
-                              className="block flex flex-row text-sm font-medium text-gray-700"
-                            >
-                              <User /> Sender Account Holder
-                            </label>
-                            <div>
-                              <input
-                                type="text"
-                                name="accountHolder"
-                                placeholder="Enter sender Account holder"
-                                id="accountHolder"
-                                className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm ${
-                                  checkValues?.sender_account_provider_name ===
-                                  "None"
-                                    ? "bg-gray-200"
-                                    : "bg-white"
-                                }`}
-                                value={checkValues.sender_account_holder_name}
-                                disabled={
-                                  checkValues?.sender_account_provider_name ===
-                                  "None"
-                                }
-                                onChange={(e) =>
-                                  setCheckValues({
-                                    ...checkValues,
-                                    sender_account_holder_name: e.target.value,
-                                  })
-                                }
-                              />{" "}
-                            </div>
-                          </div>
-
-                          {/* Sender Account Number  */}
-                          <div>
-                            <label
-                              htmlFor="accountNumber"
-                              className="block flex flex-row text-sm font-medium text-gray-700"
-                            >
-                              <User /> Sender Account Number
-                            </label>
-                            <div>
-                              <input
-                                type="text"
-                                name="accountNumber"
-                                placeholder="Enter sender Account Number"
-                                id="accountNumber"
-                                className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm ${
-                                  checkValues?.sender_account_provider_name ===
-                                  "None"
-                                    ? "bg-gray-200"
-                                    : "bg-white"
-                                }`}
-                                disabled={
-                                  checkValues?.sender_account_provider_name ===
-                                  "None"
-                                }
-                                value={checkValues.sender_account_number}
-                                onChange={(e) =>
-                                  setCheckValues({
-                                    ...checkValues,
-                                    sender_account_number: e.target.value,
-                                  })
-                                }
-                              />{" "}
-                            </div>
-                          </div>
-
-                          {/* Cheque Number */}
-                          <div>
-                            <label
-                              htmlFor="chequeNumber"
-                              className="block flex flex-row text-sm font-medium text-gray-700"
-                            >
-                              <User /> Cheque Number
-                            </label>
-                            <div>
-                              <input
-                                type="text"
-                                name="chequeNumber"
-                                placeholder="Enter Cheque Number"
-                                id="chequeNumber"
-                                className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                value={checkValues.check_no}
-                                onChange={(e) =>
-                                  setCheckValues({
-                                    ...checkValues,
-                                    check_no: e.target.value,
-                                  })
-                                }
-                              />{" "}
-                            </div>
-                          </div>
-
-                          {/* Receipt Number */}
-                          <div>
-                            <label
-                              htmlFor="receiptNumber"
-                              className="block flex flex-row text-sm font-medium text-gray-700"
-                            >
-                              <User /> Receipt Number
-                            </label>
-                            <div>
-                              <input
-                                type="text"
-                                name="receiptNumber"
-                                placeholder="Enter Receipt Number"
-                                id="receiptNumber"
-                                className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                value={checkValues.receipt_number}
-                                onChange={(e) =>
-                                  setCheckValues({
-                                    ...checkValues,
-                                    receipt_number: e.target.value,
-                                  })
-                                }
-                              />{" "}
-                            </div>
-                          </div>
-
-                          {/* Amount Paid */}
-                          <div>
-                            <label
-                              htmlFor="amountPaid"
-                              className="block flex flex-row text-sm font-medium text-gray-700"
-                            >
-                              <User /> Amount Paid
-                            </label>
-                            <div>
-                              <input
-                                type="number"
-                                name="amountPaid"
-                                placeholder="Enter Amount Paid"
-                                id="amountPaid"
-                                disabled
-                                className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                value={checkValues.total_amount_paid}
-                                // onChange={(e) =>
-                                //     setCheckValues({
-                                //         ...checkValues,
-                                //         amount_paid: e.target.value,
-                                //     })
-                                // }
-                              />{" "}
-                            </div>
-                          </div>
-
-                          {/* Transaction Date & Time */}
-                          <div>
-                            <label
-                              htmlFor="date"
-                              className="block flex flex-row text-sm font-medium text-gray-700"
-                            >
-                              <Calendar /> Transaction Date & Time
-                            </label>
-                            <div>
-                              <input
-                                type="datetime-local"
-                                name="dateTime"
-                                id="dateTime"
-                                className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                value={checkValues.date_paid}
-                                onChange={(e) =>
-                                  setCheckValues({
-                                    ...checkValues,
-                                    date_paid: e.target.value,
-                                  })
-                                }
-                              />{" "}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
                       {/* Momo Payment */}
                       {paymentMode === "Momo" && (
                         <div className="space-y-4">
-                          {/* Account Selection  */}
-                          <div>
-                            <label
-                              htmlFor="accountSelection"
-                              className="block flex flex-row text-sm font-medium text-gray-700"
-                            >
-                              <DollarSign />
-                              Select Account to use
-                            </label>
-                            <select
-                              className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                              onChange={(e) => {
-                                let selectedAccount = fetchedAccounts?.find(
-                                  (account) =>
-                                    account?.account_name === e.target.value
-                                );
-                                // console.log('seleted', selectedAccount);
-                                setMomoValues({
-                                  ...momoValues,
-                                  account_id: selectedAccount?.id,
-                                  account_holder:
-                                    selectedAccount?.account_name || "N/A",
-                                  network_provider:
-                                    selectedAccount?.network_provider || "N/A",
-                                  mobile_number:
-                                    selectedAccount?.account_number || "N/A",
-                                });
-                              }}
-                            >
-                              <option value="">Select Account</option>
-                              {fetchedAccounts?.map((account, index) => (
-                                <>
-                                  {/* {account?.type === 'momo' && ( */}
-                                  <option
-                                    key={index}
-                                    value={account?.account_name}
-                                  >
-                                    {account?.account_name}
-                                  </option>
-                                  {/* )} */}
-                                </>
-                              ))}
-                            </select>
-                          </div>
-
                           {/* Network Provider  */}
-                          <div>
+                          {/* <div>
                             <label
                               htmlFor="networkProvider"
                               className="block flex flex-row text-sm font-medium text-gray-700"
@@ -1979,10 +1068,10 @@ function Pay() {
                               <option value="Telecel">Telecel</option>
                               <option value="AT">AT</option>
                             </select>
-                          </div>
+                          </div> */}
 
                           {/* Account Holder */}
-                          <div>
+                          {/* <div>
                             <label
                               htmlFor="accountHolder"
                               className="block flex flex-row text-sm font-medium text-gray-700"
@@ -2006,10 +1095,10 @@ function Pay() {
                                 }
                               />{" "}
                             </div>
-                          </div>
+                          </div> */}
 
                           {/* Account Number */}
-                          <div>
+                          {/* <div>
                             <label
                               htmlFor="mobileNumber"
                               className="block flex flex-row text-sm font-medium text-gray-700"
@@ -2033,7 +1122,7 @@ function Pay() {
                                 }
                               />{" "}
                             </div>
-                          </div>
+                          </div> */}
 
                           {/* Sender Network Provider  */}
                           <div>
@@ -2149,7 +1238,7 @@ function Pay() {
                               htmlFor="amountPaid"
                               className="block flex flex-row text-sm font-medium text-gray-700"
                             >
-                              <User /> Amount Paid
+                              <Banknote /> Amount Paid
                             </label>
                             <div>
                               <input
@@ -2189,6 +1278,167 @@ function Pay() {
                                   setMomoValues({
                                     ...momoValues,
                                     date_paid: e.target.value,
+                                  })
+                                }
+                              />{" "}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {paymentMode === "Card" && (
+                        <div className="space-y-4">
+                          {/* Account Holder */}
+                          <div>
+                            <label
+                              htmlFor="accountHolder"
+                              className="block flex flex-row text-sm font-medium text-gray-700"
+                            >
+                              <User /> Account Holder
+                            </label>
+                            <div>
+                              <input
+                                type="text"
+                                name="accountHolder"
+                                placeholder="Enter Account Holder"
+                                id="accountHolder"
+                                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                                value={momoValues.account_holder}
+                                onChange={(e) =>
+                                  setMomoValues({
+                                    ...momoValues,
+                                    account_holder: e.target.value,
+                                  })
+                                }
+                              />{" "}
+                            </div>
+                          </div>
+
+                          {/* Card Type  */}
+                          <div>
+                            <label
+                              htmlFor="networkProvider"
+                              className="block flex flex-row text-sm font-medium text-gray-700"
+                            >
+                              <CreditCard /> Card Type
+                            </label>
+                            <select
+                              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                              value={momoValues.network_provider}
+                              onChange={(e) =>
+                                setMomoValues({
+                                  ...momoValues,
+                                  network_provider: e.target.value,
+                                })
+                              }
+                            >
+                              <option value="" disabled>
+                                Select Card Type
+                              </option>
+                              <option value="Visa">Visa</option>
+                              <option value="Mastercard">Mastercard</option>
+                            </select>
+                          </div>
+
+                          {/* Card Number */}
+                          <div>
+                            <label
+                              htmlFor="cardNumber"
+                              className="block flex flex-row text-sm font-medium text-gray-700"
+                            >
+                              <CreditCard /> Card Number
+                            </label>
+                            <div>
+                              <input
+                                type="text"
+                                name="cardNumber"
+                                placeholder="Enter Card Number"
+                                id="cardNumber"
+                                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                                value={momoValues.mobile_number}
+                                onChange={(e) =>
+                                  setMomoValues({
+                                    ...momoValues,
+                                    mobile_number: e.target.value,
+                                  })
+                                }
+                              />{" "}
+                            </div>
+                          </div>
+
+                          {/* CVV  */}
+                          <div>
+                            <label
+                              htmlFor="cvv"
+                              className="block flex flex-row text-sm font-medium text-gray-700"
+                            >
+                              <CreditCard /> CVV
+                            </label>
+                            <div>
+                              <input
+                                type="text"
+                                name="cvv"
+                                placeholder="Enter CVV"
+                                id="cvv"
+                                className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm`}
+                                value={momoValues.sender_account_holder_name}
+                                // disabled
+                                onChange={(e) =>
+                                  setMomoValues({
+                                    ...momoValues,
+                                    sender_account_holder_name: e.target.value,
+                                  })
+                                }
+                              />{" "}
+                            </div>
+                          </div>
+
+                          {/* Expiry Date */}
+                          <div>
+                            <label
+                              htmlFor="date"
+                              className="block flex flex-row text-sm font-medium text-gray-700"
+                            >
+                              <Calendar /> Expiry Date
+                            </label>
+                            <div>
+                              <input
+                                type="date"
+                                name="dateTime"
+                                id="dateTime"
+                                className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                                value={momoValues.date_paid}
+                                onChange={(e) =>
+                                  setMomoValues({
+                                    ...momoValues,
+                                    date_paid: e.target.value,
+                                  })
+                                }
+                              />{" "}
+                            </div>
+                          </div>
+
+                          {/* Reference  */}
+                          <div>
+                            <label
+                              htmlFor="reference"
+                              className="block flex flex-row text-sm font-medium text-gray-700"
+                            >
+                              <User /> Reference
+                            </label>
+                            <div>
+                              <input
+                                type="text"
+                                name="reference"
+                                placeholder="Enter Reference"
+                                id="reference"
+                                className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm`}
+                                value={momoValues.sender_account_holder_name}
+                                // disabled
+                                onChange={(e) =>
+                                  setMomoValues({
+                                    ...momoValues,
+                                    sender_account_holder_name: e.target.value,
                                   })
                                 }
                               />{" "}
