@@ -17,6 +17,7 @@ import {
   FileText,
   CircleDollarSignIcon,
 } from "lucide-react";
+import { Menu } from "lucide-react";
 
 function DashboardPage() {
   const navigate = useNavigate();
@@ -53,6 +54,10 @@ function DashboardPage() {
     { value: "pay", label: "Pay", icon: CircleDollarSignIcon },
   ];
 
+  const handleNavigate = (tab) => {
+    setActiveTab(tab);
+  };
+
   return (
     <>
       <Helmet>
@@ -76,8 +81,9 @@ function DashboardPage() {
               </TabsTrigger>
             ))}
           </TabsList>
+
           <TabsContent value="overview">
-            <DashboardOverview user={user} />
+            <DashboardOverview user={user} handleNavigate={handleNavigate} />
           </TabsContent>
           <TabsContent value="history">
             <PurchaseHistory />
