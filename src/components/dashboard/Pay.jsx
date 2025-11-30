@@ -13,6 +13,8 @@ import {
   Home,
   Type,
   User,
+  Boxes,
+  LocateIcon,
 } from "lucide-react";
 import Pagination from "../ui/pagination";
 import DropdownSearch from "../ui/dropdownsearch";
@@ -247,7 +249,7 @@ function Pay() {
                   </div>
                 </div> */}
                 {stepOne && (
-                  <div className="mx-auto border-[1px] rounded-lg shadow-md px-10 py-2">
+                  <div className="mx-auto border-[1px] rounded-lg shadow-md md:px-10 md:py-2 px-4 py-2">
                     <div className="">
                       {/* <img
                         src={
@@ -457,14 +459,15 @@ function Pay() {
                     {policyType.toLowerCase() == "embedded" && (
                       <div className="">
                         <div className="my-4">
-                          <div className="space-y-2">
+                          <div className="md:space-y-2 space-y-5">
                             <div className="flex flex-row">
                               <div className="w-[30%]">Date:</div>
                               <span>{new Date().toLocaleDateString()}</span>
                             </div>
+                            {/* Transaction ID */}
                             <div className="flex flex-row">
-                              <div className="w-[30%]">Transaction ID:</div>
-                              <span>
+                              <div className="md:w-[30%]">Transaction ID:</div>
+                              <span className="md:pl-0 pl-4">
                                 {loading ? (
                                   <div className="flex items-center justify-center">
                                     <ThreeDots
@@ -480,11 +483,12 @@ function Pay() {
                                 )}
                               </span>
                             </div>
-                            <div className="flex flex-row">
+                            {/* Total Amount  */}
+                            <div className="flex md:flex-row flex-col">
                               <div className="w-[30%] my-auto">
                                 Total Amount:
                               </div>
-                              <div className="w-[50%]">
+                              <div className="md:w-[50%]">
                                 <input
                                   type="text"
                                   className="rounded-lg border-[1px] border-gray p-2 w-full"
@@ -501,21 +505,21 @@ function Pay() {
                               </span> */}
                             </div>
                             {/* Total Units  */}
-                            <div className="flex flex-row">
+                            <div className="flex md:flex-row flex-col">
                               <label
                                 htmlFor="totalUnits"
-                                className="block flex flex-row w-[30%] my-auto"
+                                className="block flex flex-row md:w-[30%] my-auto"
                               >
-                                <User /> Total Units
+                                <Boxes /> Total Units
                               </label>
-                              <div className="w-[50%]">
+                              <div className="md:w-[50%]">
                                 <input
                                   type="text"
                                   name="totalUnits"
                                   placeholder="Enter total units"
                                   id="totalUnits"
                                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                  // disabled
+                                  disabled={payOption === "premium"}
                                   // value={bankValues.account_number}
                                   // onChange={(e) =>
                                   //   setBankValues({
@@ -527,14 +531,14 @@ function Pay() {
                               </div>
                             </div>
                             {/* Location  */}
-                            <div className="flex flex-row">
+                            <div className="flex md:flex-row flex-col">
                               <label
                                 htmlFor="location"
-                                className="block flex flex-row w-[30%] my-auto"
+                                className="block flex flex-row md:w-[30%] my-auto"
                               >
-                                <User /> Location
+                                <LocateIcon /> Location
                               </label>
-                              <div className="w-[50%]">
+                              <div className="md:w-[50%]">
                                 <DropdownSearch
                                   options={[
                                     {
@@ -551,6 +555,7 @@ function Pay() {
                                   }))}
                                   // onOptionSelect={handleOptionSelect}
                                   placeholder={"Location"}
+                                  disabled={payOption === "premium"}
                                 />
                                 {/* <input
                                   type="text"
@@ -570,14 +575,14 @@ function Pay() {
                               </div>
                             </div>
                             {/* Attendant ID/Name  */}
-                            <div className="flex flex-row">
+                            <div className="flex md:flex-row flex-col">
                               <label
                                 htmlFor="attendant"
-                                className="block flex w-[30%] flex-row my-auto"
+                                className="block flex md:w-[30%] flex-row my-auto"
                               >
                                 <User /> Attendant ID / Name
                               </label>
-                              <div className="w-[50%]">
+                              <div className="md:w-[50%]">
                                 <DropdownSearch
                                   options={[
                                     {
@@ -594,6 +599,7 @@ function Pay() {
                                   }))}
                                   // onOptionSelect={handleOptionSelect}
                                   placeholder={"Select Attendant name"}
+                                  disabled={payOption === "premium"}
                                 />
                                 {/* <input
                                   type="text"
@@ -612,7 +618,7 @@ function Pay() {
                               </div>
                             </div>
                           </div>
-                          <div>
+                          <div className="">
                             {selectedPolicy?.premium?.premium_type?.toLowerCase() ===
                               "micro contribution" && (
                               <div className="w-full ltr:ml-auto rtl:mr-auto">
@@ -987,7 +993,7 @@ function Pay() {
                   </div>
                 )}
                 {stepTwo && (
-                  <div className="border-[1px] rounded-lg shadow-md w-[70%] mx-auto p-2">
+                  <div className="border-[1px] rounded-lg shadow-md md:w-[70%] mx-auto p-2">
                     {/* <div className="px-4">
                       <button
                         type="button"
@@ -1414,6 +1420,33 @@ function Pay() {
                                     date_paid: e.target.value,
                                   })
                                 }
+                              />{" "}
+                            </div>
+                          </div>
+
+                          {/* Amount Paid  */}
+                          <div>
+                            <label
+                              htmlFor="amountPaid"
+                              className="block flex flex-row text-sm font-medium text-gray-700"
+                            >
+                              <Banknote /> Amount Paid
+                            </label>
+                            <div>
+                              <input
+                                type="number"
+                                name="amountPaid"
+                                placeholder="Enter Amount Paid"
+                                id="amountPaid"
+                                disabled
+                                className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                                value={momoValues.total_amount_paid}
+                                // onChange={(e) =>
+                                //     setMomoValues({
+                                //         ...momoValues,
+                                //         amount_paid: e.target.value,
+                                //     })
+                                // }
                               />{" "}
                             </div>
                           </div>

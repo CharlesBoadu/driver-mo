@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
-
-const DropdownSearch = ({ options, placeholder = "Search...", onOptionSelect }) => {
+const DropdownSearch = ({
+  options,
+  placeholder = "Search...",
+  onOptionSelect,
+  disabled,
+}) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOption, setSelectedOption] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
 
-  const filteredOptions = options?.filter(option =>
+  const filteredOptions = options?.filter((option) =>
     option.label.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -23,15 +27,23 @@ const DropdownSearch = ({ options, placeholder = "Search...", onOptionSelect }) 
         <input
           type="text"
           placeholder={placeholder}
-          className="flex-1 px-3 py-2 text-gray-700 bg-white border-none rounded-md focus:outline-none"
+          className={`flex-1 px-3 py-2 text-gray-700 bg-white border-none rounded-md focus:outline-none ${
+            disabled && "bg-gray-300"
+          }`}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onFocus={() => setIsOpen(true)}
+          disabled={disabled}
         />
         <button
           type="button"
           className="px-3 py-2 text-gray-500"
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => {
+            if (disabled) {
+              return;
+            }
+            setIsOpen(!isOpen);
+          }}
         >
           ▼
         </button>
