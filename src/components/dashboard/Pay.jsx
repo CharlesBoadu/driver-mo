@@ -536,7 +536,7 @@ function Pay() {
                                 htmlFor="location"
                                 className="block flex flex-row md:w-[30%] my-auto"
                               >
-                                <LocateIcon /> Location
+                                <LocateIcon /> Station Name / Location
                               </label>
                               <div className="md:w-[50%]">
                                 <DropdownSearch
