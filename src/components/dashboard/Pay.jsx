@@ -516,7 +516,7 @@ function Pay() {
                                 <input
                                   type="text"
                                   name="totalUnits"
-                                  placeholder="Enter total units"
+                                  placeholder="Automatically calculated"
                                   id="totalUnits"
                                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
                                   disabled={payOption === "premium"}
@@ -587,11 +587,11 @@ function Pay() {
                                   options={[
                                     {
                                       unique_id: "1",
-                                      name: "Mark Larbi",
+                                      name: "ID001 - Mark Larbi",
                                     },
                                     {
                                       unique_id: "2",
-                                      name: "Aisha Danku",
+                                      name: "ID002 - Aisha Danku",
                                     },
                                   ]?.map((data) => ({
                                     id: data.unique_id,
