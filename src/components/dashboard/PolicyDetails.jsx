@@ -1462,7 +1462,9 @@ function PolicyDetails() {
     },
   ];
 
-  console.log("secondary Life data", secondaryLifeData);
+  // console.log("secondary Life data", secondaryLifeData);
+
+  console.log("Client details", clientDetails)
   return (
     <div className="space-y-6">
       <Card>
@@ -1496,19 +1498,53 @@ function PolicyDetails() {
                   value={clientDetails?.msisdn || "N/A"}
                 />
                 <DetailItem
+                  icon={User}
+                  label="Gender"
+                  value={clientDetails?.gender || "N/A"}
+                />
+                <DetailItem
                   icon={Calendar}
                   label="Date of Birth"
                   value={clientDetails?.dob || "N/A"}
                 />
                 <DetailItem
+                  icon={User}
+                  label="Occupation"
+                  value={clientDetails?.occupation || "N/A"}
+                />
+                <DetailItem
+                  icon={User}
+                  label="ID Type"
+                  value={clientDetails?.id_type || "N/A"}
+                />
+                <DetailItem
+                  icon={User}
+                  label="ID Number"
+                  value={clientDetails?.id_number || "N/A"}
+                />
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-semibold flex items-center gap-2 mb-4 text-orange-600">
+                <User className="w-5 h-5" />
+                Product Details
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 border rounded-lg bg-gray-50/50">
+                <DetailItem
                   icon={Hash}
                   label="Vehicle Number"
-                  value={clientDetails?.product?.item_product || "N/A"}
+                  value={clientDetails?.product?.item_id || "N/A"}
                 />
                 <DetailItem
                   icon={Car}
                   label="Vehicle Type"
                   value={clientDetails?.product?.item_type || "N/A"}
+                />
+                <DetailItem
+                  icon={Car}
+                  label="Fuel Type"
+                  value={clientDetails?.product?.item_product || "N/A"}
                 />
               </div>
             </div>

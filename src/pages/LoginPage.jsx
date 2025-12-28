@@ -268,6 +268,17 @@ function LoginPage() {
                           </button>
                         </div>
                       </div>
+                      <div className="mt-6 text-end">
+                        <p className="text-sm text-gray-600">
+                          Forgot Password?{" "}
+                          <span
+                            onClick={() => navigate("/forgot-password")}
+                            className="font-semibold text-orange-600 hover:underline cursor-pointer"
+                          >
+                            Reset here
+                          </span>
+                        </p>
+                      </div>
                       <Button
                         type="submit"
                         className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-3 text-lg"
