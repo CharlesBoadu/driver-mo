@@ -146,7 +146,7 @@ function Pay() {
       receipt_number: bankValues.receipt_number,
       account_holder: bankValues.account_holder,
       amount_paid: amountToPay,
-      account_id: "",
+      account_id: "7a573a61-5049-437b-918a-544720e538f3",
     };
 
     const finalMomoValues = {
@@ -163,7 +163,7 @@ function Pay() {
       reference: momoValues.reference,
       account_holder: momoValues.account_holder,
       amount_paid: amountToPay,
-      account_id: "",
+      account_id: "7a573a61-5049-437b-918a-544720e538f3",
     };
 
     const response = await paymentApi.makePayment(
