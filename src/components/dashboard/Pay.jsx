@@ -19,15 +19,15 @@ import {
 } from "lucide-react";
 import Pagination from "../ui/pagination";
 import DropdownSearch from "../ui/dropdownsearch";
+import { useEffect, useState, useMemo } from "react";
 
-import { useEffect, useState } from "react";
 function Pay() {
   const [payOption, setPayOption] = useState("");
   const [stepOne, setStepOne] = useState(true);
   const [stepTwo, setStepTwo] = useState(false);
   const [policyType, setPolicyType] = useState("embedded");
   const [paymentMode, setPaymentMode] = useState("");
-  const [fetchedAccounts, setFetchedAccounts] = useState([]);
+  const [amountToPay, setAmountToPay] = useState("");
   const [loading, setLoading] = useState(false);
   const [transactionID, setTransactionID] = useState("");
   const [amount, setAmount] = useState(0);
@@ -200,6 +200,24 @@ function Pay() {
     setClientDetails(clientDetails);
   }, []);
 
+  const totalUnits = useMemo(() => {
+    const clientDetails = JSON.parse(localStorage.getItem("clientDetails"));
+
+    const selectedProduct =
+      clientDetails?.plan?.product_details?.linked_item_product?.find(
+        (product) =>
+          product?.product_name?.toLowerCase() ===
+          clientDetails?.product?.item_product?.toLowerCase()
+      );
+
+    const minUnit = Number(selectedProduct?.min_purchase_unit || 0);
+    const amount = Number(amountToPay);
+
+    if (!amount || amount <= 0) return 0;
+
+    return minUnit / amount;
+  }, [amountToPay]);
+
   return (
     <div>
       <form onSubmit={handlePayment} className="space-y-8">
@@ -284,19 +302,24 @@ function Pay() {
                               </div>
                               <div className="md:w-[50%]">
                                 <input
-                                  type="text"
+                                  type="text" // ← changed from type="number"
+                                  inputMode="decimal"
+                                  pattern="[0-9]*\.?[0-9]*" // allows digits and one decimal point
                                   className="rounded-lg border-[1px] border-gray p-2 w-full"
                                   placeholder="Enter amount"
-                                  // onChange={handleSearch}
+                                  value={amountToPay}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    // Allow only valid number formats (including empty string)
+                                    if (
+                                      value === "" ||
+                                      /^\d*\.?\d{0,2}$/.test(value)
+                                    ) {
+                                      setAmountToPay(value);
+                                    }
+                                  }}
                                 />
                               </div>
-                              {/* <span className="text-3xl font-semibold">
-                                GHS{" "}
-                                {bankValues?.total_amount_paid ||
-                                  amount *
-                                    getPremiumFrequency() *
-                                    isCheckboxChecked.length}
-                              </span> */}
                             </div>
                             {/* Total Units  */}
                             <div className="flex md:flex-row flex-col">
@@ -313,14 +336,8 @@ function Pay() {
                                   placeholder="Automatically calculated"
                                   id="totalUnits"
                                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                  disabled={payOption === "premium"}
-                                  // value={bankValues.account_number}
-                                  // onChange={(e) =>
-                                  //   setBankValues({
-                                  //     ...bankValues,
-                                  //     account_number: e.target.value,
-                                  //   })
-                                  // }
+                                  disabled
+                                  value={totalUnits}
                                 />{" "}
                               </div>
                             </div>
@@ -351,21 +368,6 @@ function Pay() {
                                   placeholder={"Location"}
                                   disabled={payOption === "premium"}
                                 />
-                                {/* <input
-                                  type="text"
-                                  name="location"
-                                  placeholder="Enter Location"
-                                  id="location"
-                                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                  // disabled
-                                  value={bankValues.account_number}
-                                  onChange={(e) =>
-                                    setBankValues({
-                                      ...bankValues,
-                                      account_number: e.target.value,
-                                    })
-                                  }
-                                />{" "} */}
                               </div>
                             </div>
                             {/* Attendant ID/Name  */}
@@ -458,119 +460,6 @@ function Pay() {
                             )}
                           </div>
                         </div>
-
-                        {/* Table  */}
-                        {/* <div className="overflow-auto mb-5">
-                          <table className="w-full border-[1px]">
-                            <thead>
-                              <tr>
-                                <th>
-                                  <input
-                                    type="checkbox"
-                                    checked={checkAll}
-                                    onChange={() => {
-                                      if (checkAll) {
-                                        handleCheckboxChange(-2);
-                                        setCheckAll(false);
-                                      } else {
-                                        handleCheckboxChange(-1);
-                                        setCheckAll(true);
-                                      }
-                                    }}
-                                  />
-                                </th>
-                                <th>Assured Lives</th>
-                                <th>Policy Number</th>
-                                <th>Amount</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {loading ? (
-                                <tr>
-                                  <td></td>
-                                  <td></td>
-                                  <td>Loading...</td>
-                                  <td></td>
-                                </tr>
-                              ) : (
-                                <>
-                                  {currentRetailorEmbeddedItems?.length ===
-                                    0 && (
-                                    <tr>
-                                      <td></td>
-                                      <td></td>
-                                      <td>No data found</td>
-                                      <td></td>
-                                    </tr>
-                                  )}
-                                  {currentRetailorEmbeddedItems?.map(
-                                    (data, index) => {
-                                      const overallIndex =
-                                        indexOfFirstItem + index + 1;
-
-                                      // console.log('Data', data);
-
-                                      return (
-                                        <tr
-                                          key={overallIndex}
-                                          className="hover:cursor-pointer"
-                                        >
-                                          <td>
-                                            <input
-                                              type="checkbox"
-                                              checked={
-                                                isCheckboxChecked.includes(
-                                                  index
-                                                )
-                                                  ? true
-                                                  : false
-                                              }
-                                              onChange={() => {
-                                                handleCheckboxChange(index);
-                                              }}
-                                            />
-                                          </td>
-                                          <td>
-                                            {data?.policy_holder?.first_name}{" "}
-                                            {data.policy_holder?.last_name}
-                                          </td>
-                                          <td>
-                                            {data.policy_holder
-                                              ?.policy_holder_member_number ||
-                                              "N/A"}
-                                          </td>
-                                          <td>
-                                            {selectedPolicy?.premium?.premium_type?.toLowerCase() ===
-                                            "micro contribution" ? (
-                                              <input
-                                                type="text"
-                                                className="rounded-lg border-[1px] border-gray-300 p-2"
-                                                value={amount}
-                                                onChange={(e) =>
-                                                  setAmount(
-                                                    Number(e.target.value)
-                                                  )
-                                                }
-                                              />
-                                            ) : (
-                                              <>{amount}</>
-                                            )}
-                                          </td>
-                                        </tr>
-                                      );
-                                    }
-                                  )}
-                                </>
-                              )}
-                            </tbody>
-                          </table>
-                        </div> */}
-                        {/* <Pagination
-                          handleNextPage={handleNextPage}
-                          handlePrevPage={handlePrevPage}
-                          currentPage={currentPage}
-                          setCurrentPage={setCurrentPage}
-                        /> */}
                       </div>
                     )}
                     <div className="my-4 flex justify-end">
