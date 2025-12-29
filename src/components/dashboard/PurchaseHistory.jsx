@@ -110,12 +110,10 @@ const MonthlySummary = ({ month, transactions, onTransactionSelect }) => {
   const totalPurchase = transactions
     ?.reduce((acc, t) => acc + parseFloat(t.amount), 0)
     .toFixed(2);
-  const totalLitres = transactions?.reduce(
-    (acc, t) => acc + parseFloat(t.quantity),
-    0
-  );
+  const totalLitres =
+    transactions?.reduce((acc, t) => acc + parseFloat(t.quantity), 0) || "N/A";
   const totalPremiums = transactions
-    ?.reduce((acc, t) => acc + parseFloat(t.premium), 0)
+    ?.reduce((acc, t) => acc + parseFloat(t.earned_premium || 0), 0)
     .toFixed(2);
 
   return (
@@ -235,30 +233,35 @@ function PurchaseHistory() {
       const response = await policyAndPlanApi.fetchPremiumHistory({
         policy_holder_id: clientData?.policy_holder_id || "",
       });
+      console.log("Response", response);
       setLoading(false);
-      setFetchedPremiumHistory(
-        Object.fromEntries(
-          (response?.data || []).map((data) => [
-            data?.month,
-            data?.transactions?.map((item) => ({
-              id: item?.transaction_id || "N/A",
-              date: item?.date_paid || "N/A",
-              time: item?.time || "N/A",
-              location: item?.location || "N/A",
-              quantity: item?.units || "N/A",
-              amount: formatMoney(item?.total_amount_paid || "0.00"),
-              premium: item?.earned_premium || "0.00",
-              paymentMethod: item?.payment_method || "N/A",
-            })) || [],
-          ])
-        )
-      );
+      if (response?.data?.length > 0) {
+        setFetchedPremiumHistory(
+          Object.fromEntries(
+            (response?.data || []).map((data) => [
+              data?.month,
+              data?.transactions?.map((item) => ({
+                id: item?.transaction_id || "N/A",
+                date: item?.date_paid.split("T")[0] || "N/A",
+                time: item?.date_paid.split("T")[1] || "N/A",
+                location: item?.location || "N/A",
+                quantity: item?.total_litres || "N/A",
+                amount: formatMoney(item?.total_amount_paid || "0.00"),
+                premium: item?.earned_premium || "0.00",
+                paymentMethod: item?.payment_method || "N/A",
+              })) || [],
+            ])
+          )
+        );
+      } else {
+        setFetchedPremiumHistory([]);
+      }
     };
 
     fetchPremiumHistory();
   }, []);
 
-  // console.log("Fetched premium history:", fetchedPremiumHistory);
+  console.log("Fetched premium history:", fetchedPremiumHistory);
 
   return (
     <Card>
@@ -273,114 +276,128 @@ function PurchaseHistory() {
           <p className="text-center py-10">Loading purchase history...</p>
         </CardContent>
       ) : (
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input placeholder="Search by location..." className="pl-10" />
-            </div>
-            <Select>
-              <SelectTrigger className="w-full md:w-[180px]">
-                <div className="flex items-center gap-2">
-                  <Filter className="w-4 h-4" />
-                  <span>Filter by Date</span>
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="last7">Last 7 Days</SelectItem>
-                <SelectItem value="last30">Last 30 Days</SelectItem>
-                <SelectItem value="last90">Last 90 Days</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button
-              onClick={() => handleDownload("pdf")}
-              className="w-full md:w-auto"
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Download PDF
-            </Button>
-          </div>
-
-          <Dialog>
-            <div className="rounded-md border">
-              {Object.entries(fetchedPremiumHistory || []).map(
-                ([month, transactions]) => (
-                  <MonthlySummary
-                    key={month}
-                    month={month}
-                    transactions={transactions}
-                    onTransactionSelect={setSelectedTransaction}
+        <>
+          {fetchedPremiumHistory?.length === 0 && (
+            <CardContent>
+              <p className="text-center py-10">
+                No purchase history available.
+              </p>
+            </CardContent>
+          )}
+          {fetchedPremiumHistory && (
+            <CardContent>
+              <div className="flex flex-col md:flex-row gap-4 mb-6">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="Search by location..."
+                    className="pl-10"
                   />
-                )
-              )}
-            </div>
-            {selectedTransaction && (
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Transaction Details</DialogTitle>
-                  <DialogDescription>
-                    Full details for transaction {selectedTransaction.id}.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-2 items-center gap-4">
-                    <span className="text-sm font-medium text-gray-500">
-                      Transaction ID:
-                    </span>
-                    <span className="font-mono text-sm">
-                      {selectedTransaction.id}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 items-center gap-4">
-                    <span className="text-sm font-medium text-gray-500">
-                      Date & Time:
-                    </span>
-                    <span>
-                      {selectedTransaction.date}, {selectedTransaction.time}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 items-center gap-4">
-                    <span className="text-sm font-medium text-gray-500">
-                      Location:
-                    </span>
-                    <span>{selectedTransaction.location}</span>
-                  </div>
-                  <div className="grid grid-cols-2 items-center gap-4">
-                    <span className="text-sm font-medium text-gray-500">
-                      Fuel Quantity:
-                    </span>
-                    <span>{selectedTransaction.quantity}</span>
-                  </div>
-                  <div className="grid grid-cols-2 items-center gap-4">
-                    <span className="text-sm font-medium text-gray-500">
-                      Total Amount:
-                    </span>
-                    <span className="font-semibold">
-                      GHS {selectedTransaction.amount}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 items-center gap-4">
-                    <span className="text-sm font-medium text-gray-500">
-                      Insurance Premium:
-                    </span>
-                    <span className="font-semibold text-orange-600">
-                      GHS {selectedTransaction.premium}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 items-center gap-4">
-                    <span className="text-sm font-medium text-gray-500">
-                      Payment Method:
-                    </span>
-                    <span className="flex items-center gap-2">
-                      {getPaymentIcon(selectedTransaction.paymentMethod)}
-                      {selectedTransaction.paymentMethod}
-                    </span>
-                  </div>
                 </div>
-              </DialogContent>
-            )}
-          </Dialog>
-        </CardContent>
+                <Select>
+                  <SelectTrigger className="w-full md:w-[180px]">
+                    <div className="flex items-center gap-2">
+                      <Filter className="w-4 h-4" />
+                      <span>Filter by Date</span>
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="last7">Last 7 Days</SelectItem>
+                    <SelectItem value="last30">Last 30 Days</SelectItem>
+                    <SelectItem value="last90">Last 90 Days</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  onClick={() => handleDownload("pdf")}
+                  className="w-full md:w-auto"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Download PDF
+                </Button>
+              </div>
+
+              <Dialog>
+                <div className="rounded-md border">
+                  {Object.entries(fetchedPremiumHistory || []).map(
+                    ([month, transactions]) => (
+                      <MonthlySummary
+                        key={month}
+                        month={month}
+                        transactions={transactions}
+                        onTransactionSelect={setSelectedTransaction}
+                      />
+                    )
+                  )}
+                </div>
+                {selectedTransaction && (
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Transaction Details</DialogTitle>
+                      <DialogDescription>
+                        Full details for transaction {selectedTransaction.id}.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-2 items-center gap-4">
+                        <span className="text-sm font-medium text-gray-500">
+                          Transaction ID:
+                        </span>
+                        <span className="font-mono text-sm">
+                          {selectedTransaction.id}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 items-center gap-4">
+                        <span className="text-sm font-medium text-gray-500">
+                          Date & Time:
+                        </span>
+                        <span>
+                          {selectedTransaction.date}, {selectedTransaction.time}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 items-center gap-4">
+                        <span className="text-sm font-medium text-gray-500">
+                          Location:
+                        </span>
+                        <span>{selectedTransaction.location}</span>
+                      </div>
+                      <div className="grid grid-cols-2 items-center gap-4">
+                        <span className="text-sm font-medium text-gray-500">
+                          Fuel Quantity:
+                        </span>
+                        <span>{selectedTransaction.quantity}</span>
+                      </div>
+                      <div className="grid grid-cols-2 items-center gap-4">
+                        <span className="text-sm font-medium text-gray-500">
+                          Total Amount:
+                        </span>
+                        <span className="font-semibold">
+                          GHS {selectedTransaction.amount}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 items-center gap-4">
+                        <span className="text-sm font-medium text-gray-500">
+                          Insurance Premium:
+                        </span>
+                        <span className="font-semibold text-orange-600">
+                          GHS {selectedTransaction.premium}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 items-center gap-4">
+                        <span className="text-sm font-medium text-gray-500">
+                          Payment Method:
+                        </span>
+                        <span className="flex items-center gap-2">
+                          {getPaymentIcon(selectedTransaction.paymentMethod)}
+                          {selectedTransaction.paymentMethod}
+                        </span>
+                      </div>
+                    </div>
+                  </DialogContent>
+                )}
+              </Dialog>
+            </CardContent>
+          )}
+        </>
       )}
     </Card>
   );
