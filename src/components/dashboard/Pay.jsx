@@ -5,6 +5,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "@/components/ui/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Banknote,
   Calendar,
@@ -19,9 +28,18 @@ import {
 } from "lucide-react";
 import Pagination from "../ui/pagination";
 import DropdownSearch from "../ui/dropdownsearch";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
+import paymentApi from "../../services/api/payment";
+
+const PayOptionSelection = ({ title, children }) => (
+  <div className="space-y-4 border-t pt-6 mt-6">
+    <h3 className="text-md font-semibold bg-primary text-white p-2">{title}</h3>
+    {children}
+  </div>
+);
 
 function Pay() {
+  const amountInputRef = useRef(null);
   const [payOption, setPayOption] = useState("");
   const [stepOne, setStepOne] = useState(true);
   const [stepTwo, setStepTwo] = useState(false);
@@ -49,6 +67,8 @@ function Pay() {
     sender_account_provider_name: "",
     sender_account_number: "",
     sender_account_holder_name: "",
+    cvv: "",
+    card_type: "",
   });
   const [checkValues, setCheckValues] = useState({
     account_id: "",
@@ -89,6 +109,8 @@ function Pay() {
     sender_account_number: "",
     sender_account_holder_name: "",
   });
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [showPaymentSummary, setShowPaymentSummary] = useState(false);
   const [isCheckboxChecked, setIsCheckboxChecked] = useState([]);
   const [selectedPolicy, setSelectedPolicy] = useState(null);
   const [checkAll, setCheckAll] = useState(true);
@@ -96,51 +118,10 @@ function Pay() {
   const [assuredLives, setAssuredLives] = useState(null);
   const [clientDetails, setClientDetails] = useState(null);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentGroupItems = fetchedAssuredLives?.slice(
-    indexOfFirstItem,
-    indexOfLastItem
-  );
-  const currentRetailorEmbeddedItems = assuredLives?.slice(
-    indexOfFirstItem,
-    indexOfLastItem
-  );
-  const totalPages = Math.ceil(fetchedAssuredLives?.length / itemsPerPage);
-
-  const getPremiumFrequency = () => {
-    if (bankValues.frequency === "Monthly") return 1;
-    if (bankValues.frequency === "Quarterly") return 3;
-    if (bankValues.frequency === "Half-Yearly") return 6;
-    if (bankValues.frequency === "Yearly") return 12;
-    return 1;
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
-
-  const PayOptionSelection = ({ title, children }) => (
-    <div className="space-y-4 border-t pt-6 mt-6">
-      <h3 className="text-md font-semibold bg-primary text-white p-2">
-        {title}
-      </h3>
-      {children}
-    </div>
-  );
-
-  const handlePayOptionSelection = (value) => {
+  const handlePayOptionSelection = async (value) => {
     setPayOption(value);
+    const response = await getTransactionID(value);
+    setTransactionID(response);
     // setClaimant("");
     // setFormDetails({});
     // if (value === "tpd" || value === "hospitalization") {
@@ -148,12 +129,63 @@ function Pay() {
     // }
   };
 
-  const handlePayment = (e) => {
-    e.preventDefault();
-    toast({
-      title: "Payment Initiated",
-      description: "Thank you for choosing us!",
-    });
+  const handlePayment = async () => {
+    // e.preventDefault();
+    setPaymentLoading(true);
+    const finalBankValues = {
+      transaction_id: transactionID || "",
+      user_id: clientDetails?.id,
+      policy_holder_id: clientDetails?.policy_holder_id,
+      transaction_type: payOption?.toLowerCase(),
+      total_amount_paid: amountToPay,
+      date_paid: new Date().toISOString().slice(0, 19).replace("T", " ")[0],
+      frequency: "",
+      members_covered: clientDetails?.id,
+      bank_name: bankValues.bank_name,
+      account_number: bankValues.account_number,
+      receipt_number: bankValues.receipt_number,
+      account_holder: bankValues.account_holder,
+      amount_paid: amountToPay,
+      account_id: "",
+    };
+
+    const finalMomoValues = {
+      transaction_id: transactionID || "",
+      user_id: clientDetails?.id,
+      policy_holder_id: clientDetails?.policy_holder_id,
+      transaction_type: payOption?.toLowerCase(), // premium/claim
+      total_amount_paid: amountToPay,
+      date_paid: new Date().toISOString().slice(0, 19).replace("T", " "),
+      frequency: "",
+      members_covered: clientDetails?.id,
+      mobile_number: momoValues.mobile_number,
+      network_provider: momoValues.network_provider,
+      reference: momoValues.reference,
+      account_holder: momoValues.account_holder,
+      amount_paid: amountToPay,
+      account_id: "",
+    };
+
+    const response = await paymentApi.makePayment(
+      paymentMode === "Momo" ? finalMomoValues : finalBankValues,
+      paymentMode
+    );
+
+    console.log("Response from payment: ", response);
+    setPaymentLoading(false);
+    if (response?.Status === "GS200") {
+      toast({
+        title: "Payment Successful",
+        description: "Thank you for choosing us!",
+        variant: "success",
+      });
+    } else {
+      toast({
+        title: "Payment Failed",
+        description: `${response?.message}. Please try again later.`,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleResetCheckValues = () => {
@@ -195,13 +227,25 @@ function Pay() {
     });
   };
 
+  const getTransactionID = async (transactionType) => {
+    setLoading(true);
+    const response = await paymentApi.getTransactionID({
+      policy_holder_id: clientDetails?.policy_holder_id,
+      user_id: clientDetails?.id,
+      transaction_type: transactionType?.toLowerCase(),
+    });
+    setLoading(false);
+
+    return response?.data?.transaction_id;
+  };
+
   useEffect(() => {
     const clientDetails = JSON.parse(localStorage.getItem("clientDetails"));
     setClientDetails(clientDetails);
   }, []);
 
   const totalUnits = useMemo(() => {
-    const clientDetails = JSON.parse(localStorage.getItem("clientDetails"));
+    if (!clientDetails) return 0;
 
     const selectedProduct =
       clientDetails?.plan?.product_details?.linked_item_product?.find(
@@ -213,10 +257,10 @@ function Pay() {
     const minUnit = Number(selectedProduct?.min_purchase_unit || 0);
     const amount = Number(amountToPay);
 
-    if (!amount || amount <= 0) return 0;
+    if (!amount || amount <= 0 || !minUnit) return 0;
 
-    return minUnit / amount;
-  }, [amountToPay]);
+    return amount / minUnit;
+  }, [amountToPay, clientDetails]);
 
   return (
     <div>
@@ -258,7 +302,8 @@ function Pay() {
                           clientDetails?.last_name}
                       </div>
                       <div className="text-center font-bold text-lg">
-                        {clientDetails?.policy_holder_member_number || "N/A"}
+                        {clientDetails?.policy_holder_member_number ||
+                          "Policy holder member not found"}
                       </div>
                     </div>
                     {policyType.toLowerCase() == "embedded" && (
@@ -279,19 +324,14 @@ function Pay() {
                                 <CreditCard />
                                 Transaction ID:
                               </div>
-                              <span className="md:pl-0 pl-4">
+                              <span className="md:pl-0 pl-4 text-sm text-gray-500 font-semibold">
                                 {loading ? (
-                                  <div className="flex items-center justify-center">
-                                    <ThreeDots
-                                      height="40"
-                                      width="40"
-                                      radius="9"
-                                      color="#178491"
-                                      ariaLabel="loading"
-                                    />
+                                  <div className="">
+                                    Generating transaction id...
                                   </div>
                                 ) : (
-                                  transactionID || "N/A"
+                                  transactionID ||
+                                  "Could not generate Transaction ID"
                                 )}
                               </span>
                             </div>
@@ -302,6 +342,7 @@ function Pay() {
                               </div>
                               <div className="md:w-[50%]">
                                 <input
+                                  ref={amountInputRef}
                                   type="text" // ← changed from type="number"
                                   inputMode="decimal"
                                   pattern="[0-9]*\.?[0-9]*" // allows digits and one decimal point
@@ -414,56 +455,12 @@ function Pay() {
                               </div>
                             </div>
                           </div>
-                          <div className="">
-                            {selectedPolicy?.premium?.premium_type?.toLowerCase() ===
-                              "micro contribution" && (
-                              <div className="w-full ltr:ml-auto rtl:mr-auto">
-                                <input
-                                  type="text"
-                                  className="form-input w-full"
-                                  placeholder="Search assured life..."
-                                  onChange={handleSearchMicroContributions}
-                                />
-                              </div>
-                            )}
-                            {selectedPolicy?.premium?.premium_type?.toLowerCase() ===
-                              "flat rate contribution" && (
-                              <div className="space-y-4">
-                                <select
-                                  className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                  value={bankValues.frequency}
-                                  onChange={(e) => {
-                                    setBankValues({
-                                      ...bankValues,
-                                      frequency: e.target.value,
-                                    });
-                                    setMomoValues({
-                                      ...momoValues,
-                                      frequency: e.target.value,
-                                    });
-                                  }}
-                                >
-                                  <option value="" disabled>
-                                    Select Payment Frequency
-                                  </option>
-                                  <option value="Monthly">Monthly</option>
-                                  <option value="Quarterly">Quarterly</option>
-                                  <option value="Half-Yearly">
-                                    Half-Yearly
-                                  </option>
-                                  <option value="Yearly">Yearly</option>
-                                </select>
-                                {/* <div className="w-full ltr:ml-auto rtl:mr-auto">
-                                                                        <input type="text" className="form-input w-full" placeholder="Search assured life..." onChange={handleSearch} />
-                                                                    </div> */}
-                              </div>
-                            )}
-                          </div>
                         </div>
                       </div>
                     )}
                     <div className="my-4 flex justify-end">
                       <button
+                        type="button"
                         className="rounded-lg text-white bg-primary cursor-pointer px-10 py-2"
                         onClick={() => {
                           setStepOne(false);
@@ -477,18 +474,6 @@ function Pay() {
                 )}
                 {stepTwo && (
                   <div className="border-[1px] rounded-lg shadow-md md:w-[70%] mx-auto p-2">
-                    {/* <div className="px-4">
-                      <button
-                        type="button"
-                        className="rounded-lg bg-black text-white px-10 py-2"
-                        onClick={() => {
-                          setStepOne(true);
-                          setStepTwo(false);
-                        }}
-                      >
-                        Back
-                      </button>
-                    </div> */}
                     <div className="space-y-5 p-5">
                       {/* Select Mode of Payment */}
                       <div>
@@ -496,7 +481,7 @@ function Pay() {
                           htmlFor="contactPerson"
                           className="block flex flex-row text-sm font-medium text-gray-700"
                         >
-                          {/* <Paymem /> */}
+                          {/* Payment Mode */}
                           Select Payment Mode
                         </label>
                         <select
@@ -512,9 +497,6 @@ function Pay() {
                             } else if (e.target.value === "Momo") {
                               handleResetBankValues();
                               handleResetCheckValues();
-                            } else if (e.target.value === "Cheque") {
-                              handleResetBankValues();
-                              handleResetMomoValues();
                             }
                           }}
                         >
@@ -531,88 +513,6 @@ function Pay() {
                       {/* Momo Payment */}
                       {paymentMode === "Momo" && (
                         <div className="space-y-4">
-                          {/* Network Provider  */}
-                          {/* <div>
-                            <label
-                              htmlFor="networkProvider"
-                              className="block flex flex-row text-sm font-medium text-gray-700"
-                            >
-                              <Home /> Network Provider
-                            </label>
-                            <select
-                              className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-200 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                              disabled
-                              value={momoValues.network_provider}
-                              onChange={(e) =>
-                                setMomoValues({
-                                  ...momoValues,
-                                  network_provider: e.target.value,
-                                })
-                              }
-                            >
-                              <option value="" disabled>
-                                Select Network Provider
-                              </option>
-                              <option value="MTN">MTN</option>
-                              <option value="Telecel">Telecel</option>
-                              <option value="AT">AT</option>
-                            </select>
-                          </div> */}
-
-                          {/* Account Holder */}
-                          {/* <div>
-                            <label
-                              htmlFor="accountHolder"
-                              className="block flex flex-row text-sm font-medium text-gray-700"
-                            >
-                              <User /> Account Holder
-                            </label>
-                            <div>
-                              <input
-                                type="text"
-                                name="accountHolder"
-                                placeholder="Enter Account Holder"
-                                id="accountHolder"
-                                className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-200 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                disabled
-                                value={momoValues.account_holder}
-                                onChange={(e) =>
-                                  setMomoValues({
-                                    ...momoValues,
-                                    account_holder: e.target.value,
-                                  })
-                                }
-                              />{" "}
-                            </div>
-                          </div> */}
-
-                          {/* Account Number */}
-                          {/* <div>
-                            <label
-                              htmlFor="mobileNumber"
-                              className="block flex flex-row text-sm font-medium text-gray-700"
-                            >
-                              <User /> Account Number
-                            </label>
-                            <div>
-                              <input
-                                type="text"
-                                name="mobileNumber"
-                                placeholder="Enter Mobile Number"
-                                id="mobileNumber"
-                                disabled
-                                className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-200 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                value={momoValues.mobile_number}
-                                onChange={(e) =>
-                                  setMomoValues({
-                                    ...momoValues,
-                                    mobile_number: e.target.value,
-                                  })
-                                }
-                              />{" "}
-                            </div>
-                          </div> */}
-
                           {/* Sender Network Provider  */}
                           <div>
                             <label
@@ -737,7 +637,7 @@ function Pay() {
                                 id="amountPaid"
                                 disabled
                                 className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                value={momoValues.total_amount_paid}
+                                value={amountToPay}
                                 // onChange={(e) =>
                                 //     setMomoValues({
                                 //         ...momoValues,
@@ -792,10 +692,10 @@ function Pay() {
                                 placeholder="Enter Account Holder"
                                 id="accountHolder"
                                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                value={momoValues.account_holder}
+                                value={bankValues.account_holder}
                                 onChange={(e) =>
-                                  setMomoValues({
-                                    ...momoValues,
+                                  setBankValues({
+                                    ...bankValues,
                                     account_holder: e.target.value,
                                   })
                                 }
@@ -813,11 +713,11 @@ function Pay() {
                             </label>
                             <select
                               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                              value={momoValues.network_provider}
+                              value={bankValues.card_type}
                               onChange={(e) =>
-                                setMomoValues({
-                                  ...momoValues,
-                                  network_provider: e.target.value,
+                                setBankValues({
+                                  ...bankValues,
+                                  card_type: e.target.value,
                                 })
                               }
                             >
@@ -844,11 +744,11 @@ function Pay() {
                                 placeholder="Enter Card Number"
                                 id="cardNumber"
                                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                value={momoValues.mobile_number}
+                                value={bankValues.account_number}
                                 onChange={(e) =>
-                                  setMomoValues({
-                                    ...momoValues,
-                                    mobile_number: e.target.value,
+                                  setBankValues({
+                                    ...bankValues,
+                                    account_number: e.target.value,
                                   })
                                 }
                               />{" "}
@@ -870,12 +770,12 @@ function Pay() {
                                 placeholder="Enter CVV"
                                 id="cvv"
                                 className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm`}
-                                value={momoValues.sender_account_holder_name}
+                                value={bankValues.cvv}
                                 // disabled
                                 onChange={(e) =>
-                                  setMomoValues({
-                                    ...momoValues,
-                                    sender_account_holder_name: e.target.value,
+                                  setBankValues({
+                                    ...bankValues,
+                                    cvv: e.target.value,
                                   })
                                 }
                               />{" "}
@@ -896,10 +796,10 @@ function Pay() {
                                 name="dateTime"
                                 id="dateTime"
                                 className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                value={momoValues.date_paid}
+                                value={bankValues.date_paid}
                                 onChange={(e) =>
-                                  setMomoValues({
-                                    ...momoValues,
+                                  setBankValues({
+                                    ...bankValues,
                                     date_paid: e.target.value,
                                   })
                                 }
@@ -923,7 +823,7 @@ function Pay() {
                                 id="amountPaid"
                                 disabled
                                 className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                value={momoValues.total_amount_paid}
+                                value={amountToPay}
                                 // onChange={(e) =>
                                 //     setMomoValues({
                                 //         ...momoValues,
@@ -949,12 +849,12 @@ function Pay() {
                                 placeholder="Enter Reference"
                                 id="reference"
                                 className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm`}
-                                value={momoValues.sender_account_holder_name}
+                                value={bankValues.receipt_number}
                                 // disabled
                                 onChange={(e) =>
-                                  setMomoValues({
-                                    ...momoValues,
-                                    sender_account_holder_name: e.target.value,
+                                  setBankValues({
+                                    ...bankValues,
+                                    receipt_number: e.target.value,
                                   })
                                 }
                               />{" "}
@@ -988,12 +888,7 @@ function Pay() {
                               type="button"
                               className="flex flex-row space-x-2 rounded-lg bg-primary p-2 text-white"
                               onClick={() => {
-                                paymentMode === "Bank Deposit / Cash" ||
-                                paymentMode === "Bank Transfer"
-                                  ? handlePayBankPremium()
-                                  : paymentMode === "Cheque"
-                                  ? handlePayCheckPremium()
-                                  : handlePayMomoPremium();
+                                setShowPaymentSummary(true);
                               }}
                             >
                               <DollarSign />{" "}
@@ -1010,6 +905,61 @@ function Pay() {
           </>
         )}
       </form>
+
+      <Dialog open={showPaymentSummary} onOpenChange={setShowPaymentSummary}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Payment Summary</DialogTitle>
+            <DialogDescription>
+              Making a payment for{" "}
+              {payOption === "premium" ? "Premium Top Up" : "Fuel Purchase"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="flex justify-between">
+              <span className="font-semibold flex flex-row">
+                <CreditCard />
+                Transaction ID:
+              </span>
+              <span>
+                {transactionID || "Could not generate transaction ID"}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-semibold flex flex-row">
+                <Banknote />
+                Payment Mode:
+              </span>
+              <span>{paymentMode}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-semibold flex flex-row">
+                <Banknote />
+                Amount to Pay:
+              </span>
+              <span>{amountToPay}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-semibold flex flex-row">
+                <Banknote />
+                Total Units:
+              </span>
+              <span>{totalUnits}</span>
+            </div>
+            {/* Confirm Button */}
+
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                className="rounded-lg bg-primary text-white px-10 py-2"
+                onClick={handlePayment}
+              >
+                {paymentLoading ? "processing..." : "Confirm Payment"}
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
