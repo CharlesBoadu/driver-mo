@@ -98,7 +98,7 @@ function DashboardPage() {
             <Support />
           </TabsContent>
           <TabsContent value="pay">
-            <Pay />
+            <Pay handleNavigate={handleNavigate} />
           </TabsContent>
         </Tabs>
       </DashboardLayout>
