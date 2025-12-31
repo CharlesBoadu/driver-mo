@@ -160,8 +160,10 @@ const MonthlySummary = ({ month, transactions, onTransactionSelect }) => {
                   <TableRow>
                     <TableHead>S/N</TableHead>
                     <TableHead>Date & Time</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead className="text-right">Premium (GHS)</TableHead>
+                    <TableHead>Station Name / Location</TableHead>
+                    <TableHead className="text-right">
+                      Earned Premium (GHS)
+                    </TableHead>
                     <TableHead className="text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -233,7 +235,7 @@ function PurchaseHistory() {
       const response = await policyAndPlanApi.fetchPremiumHistory({
         policy_holder_id: clientData?.policy_holder_id || "",
       });
-      console.log("Response", response);
+      // console.log("Response", response);
       setLoading(false);
       if (response?.data?.length > 0) {
         setFetchedPremiumHistory(
@@ -261,7 +263,7 @@ function PurchaseHistory() {
     fetchPremiumHistory();
   }, []);
 
-  console.log("Fetched premium history:", fetchedPremiumHistory);
+  // console.log("Fetched premium history:", fetchedPremiumHistory);
 
   return (
     <Card>
@@ -356,7 +358,7 @@ function PurchaseHistory() {
                       </div>
                       <div className="grid grid-cols-2 items-center gap-4">
                         <span className="text-sm font-medium text-gray-500">
-                          Location:
+                          Station Name / Location:
                         </span>
                         <span>{selectedTransaction.location}</span>
                       </div>
