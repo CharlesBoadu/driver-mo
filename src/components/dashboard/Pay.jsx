@@ -39,7 +39,7 @@ const PayOptionSelection = ({ title, children }) => (
   </div>
 );
 
-function Pay() {
+function Pay({ handleNavigate }) {
   const amountInputRef = useRef(null);
   const [payOption, setPayOption] = useState("");
   const [stepOne, setStepOne] = useState(true);
@@ -188,6 +188,7 @@ function Pay() {
         variant: "success",
       });
       setShowPaymentSummary(false);
+      handleNavigate("history")
     } else {
       toast({
         title: "Payment Failed",
