@@ -6,6 +6,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
+import formatMoney from "../../lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -139,12 +140,15 @@ function Pay() {
       transaction_type: payOption?.toLowerCase(),
       total_amount_paid: amountToPay,
       date_paid: new Date().toISOString().slice(0, 19).replace("T", " ")[0],
-      frequency: "",
+      frequency: "daily",
       members_covered: clientDetails?.id,
-      bank_name: bankValues.bank_name,
+      bank_name: bankValues.card_type,
       account_number: bankValues.account_number,
       receipt_number: bankValues.receipt_number,
       account_holder: bankValues.account_holder,
+      sender_account_holder_name: bankValues.account_holder,
+      sender_account_provider_name: bankValues.card_type,
+      sender_account_number: bankValues.account_number,
       amount_paid: amountToPay,
       account_id: "7a573a61-5049-437b-918a-544720e538f3",
     };
@@ -156,14 +160,18 @@ function Pay() {
       transaction_type: payOption?.toLowerCase(), // premium/claim
       total_amount_paid: amountToPay,
       date_paid: new Date().toISOString().slice(0, 19).replace("T", " "),
-      frequency: "",
+      frequency: "daily",
       members_covered: clientDetails?.id,
-      mobile_number: momoValues.mobile_number,
-      network_provider: momoValues.network_provider,
+      mobile_number: clientDetails?.msisdn,
+      sender_account_number: momoValues.sender_account_number,
+      network_provider: momoValues.sender_account_provider_name,
+      sender_account_provider_name: momoValues.sender_account_provider_name,
       reference: momoValues.reference,
-      account_holder: momoValues.account_holder,
+      account_holder:
+        clientDetails?.first_name + " " + clientDetails?.last_name,
       amount_paid: amountToPay,
       account_id: "7a573a61-5049-437b-918a-544720e538f3",
+      sender_account_holder_name: momoValues?.sender_account_holder_name,
     };
 
     const response = await paymentApi.makePayment(
@@ -173,12 +181,13 @@ function Pay() {
 
     console.log("Response from payment: ", response);
     setPaymentLoading(false);
-    if (response?.Status === "GS200") {
+    if (response?.code === "GS200") {
       toast({
         title: "Payment Successful",
         description: "Thank you for choosing us!",
         variant: "success",
       });
+      setShowPaymentSummary(false);
     } else {
       toast({
         title: "Payment Failed",
@@ -324,14 +333,16 @@ function Pay() {
                                 <CreditCard />
                                 Transaction ID:
                               </div>
-                              <span className="md:pl-0 pl-4 text-sm text-gray-500 font-semibold">
+                              <span className="md:pl-0 pl-4 ">
                                 {loading ? (
-                                  <div className="">
+                                  <div className="text-sm text-gray-500 font-semibold">
                                     Generating transaction id...
                                   </div>
                                 ) : (
-                                  transactionID ||
-                                  "Could not generate Transaction ID"
+                                  <div className="font-bold">
+                                    {transactionID ||
+                                      "Could not generate Transaction ID"}
+                                  </div>
                                 )}
                               </span>
                             </div>
@@ -378,7 +389,7 @@ function Pay() {
                                   id="totalUnits"
                                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
                                   disabled
-                                  value={totalUnits}
+                                  value={totalUnits.toFixed(2)}
                                 />{" "}
                               </div>
                             </div>
@@ -492,11 +503,11 @@ function Pay() {
                               e.target.value === "Bank Deposit / Cash" ||
                               e.target.value === "Bank Transfer"
                             ) {
-                              handleResetCheckValues();
+                              // handleResetCheckValues();
                               handleResetMomoValues();
                             } else if (e.target.value === "Momo") {
                               handleResetBankValues();
-                              handleResetCheckValues();
+                              // handleResetCheckValues();
                             }
                           }}
                         >
@@ -638,12 +649,6 @@ function Pay() {
                                 disabled
                                 className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
                                 value={amountToPay}
-                                // onChange={(e) =>
-                                //     setMomoValues({
-                                //         ...momoValues,
-                                //         amount_paid: e.target.value,
-                                //     })
-                                // }
                               />{" "}
                             </div>
                           </div>
@@ -878,11 +883,6 @@ function Pay() {
                           </button>
                         </div>
                         <div className="flex justify-between space-x-6">
-                          {/* <div className="" onClick={() => setIsOpen(false)}>
-                                                        <button type="button" className="btn btn-outline-dark h-full">
-                                                            Cancel
-                                                        </button>
-                                                    </div> */}
                           <div className="">
                             <button
                               type="button"
@@ -937,14 +937,14 @@ function Pay() {
                 <Banknote />
                 Amount to Pay:
               </span>
-              <span>{amountToPay}</span>
+              <span>{formatMoney(amountToPay)}</span>
             </div>
             <div className="flex justify-between">
               <span className="font-semibold flex flex-row">
                 <Banknote />
                 Total Units:
               </span>
-              <span>{totalUnits}</span>
+              <span>{totalUnits.toFixed(2)}</span>
             </div>
             {/* Confirm Button */}
 
@@ -954,7 +954,7 @@ function Pay() {
                 className="rounded-lg bg-primary text-white px-10 py-2"
                 onClick={handlePayment}
               >
-                {paymentLoading ? "processing..." : "Confirm Payment"}
+                {paymentLoading ? "Processing..." : "Confirm Payment"}
               </button>
             </div>
           </div>
