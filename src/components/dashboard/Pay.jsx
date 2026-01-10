@@ -31,6 +31,7 @@ import Pagination from "../ui/pagination";
 import DropdownSearch from "../ui/dropdownsearch";
 import { useEffect, useState, useMemo, useRef } from "react";
 import paymentApi from "../../services/api/payment";
+import stationApi from "../../services/api/station";
 
 const PayOptionSelection = ({ title, children }) => (
   <div className="space-y-4 border-t pt-6 mt-6">
@@ -112,12 +113,27 @@ function Pay({ handleNavigate }) {
   });
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [showPaymentSummary, setShowPaymentSummary] = useState(false);
-  const [isCheckboxChecked, setIsCheckboxChecked] = useState([]);
-  const [selectedPolicy, setSelectedPolicy] = useState(null);
-  const [checkAll, setCheckAll] = useState(true);
-  const [fetchedAssuredLives, setFetchedAssuredLives] = useState([]);
-  const [assuredLives, setAssuredLives] = useState(null);
+  const [fetchedAttendants, setFetchedAttendants] = useState([]);
   const [clientDetails, setClientDetails] = useState(null);
+
+  const regions = [
+    "Ahafo",
+    "Ashanti",
+    "Bono",
+    "Bono East",
+    "Central",
+    "Eastern",
+    "Greater Accra",
+    "North East",
+    "Northern",
+    "Oti",
+    "Savannah",
+    "Upper East",
+    "Upper West",
+    "Volta",
+    "Western",
+    "Western North",
+  ];
 
   const handlePayOptionSelection = async (value) => {
     setPayOption(value);
@@ -188,7 +204,7 @@ function Pay({ handleNavigate }) {
         variant: "success",
       });
       setShowPaymentSummary(false);
-      handleNavigate("history")
+      handleNavigate("history");
     } else {
       toast({
         title: "Payment Failed",
@@ -252,6 +268,13 @@ function Pay({ handleNavigate }) {
   useEffect(() => {
     const clientDetails = JSON.parse(localStorage.getItem("clientDetails"));
     setClientDetails(clientDetails);
+
+    const fetchAllAttendants = async () => {
+      const response = await stationApi.getAllAttendants();
+      setFetchedAttendants(response?.data);
+    };
+
+    fetchAllAttendants();
   }, []);
 
   const totalUnits = useMemo(() => {
@@ -271,6 +294,39 @@ function Pay({ handleNavigate }) {
 
     return amount / minUnit;
   }, [amountToPay, clientDetails]);
+
+  const handleCheckIfValuesAreFilled = () => {
+    if (paymentMode === "Card") {
+      if (
+        !bankValues.account_holder ||
+        !bankValues.account_number ||
+        !bankValues.card_type ||
+        !bankValues.receipt_number
+      ) {
+        toast({
+          title: "Incomplete Details",
+          description: "Please fill in all required payment details.",
+          variant: "destructive",
+        });
+        return false;
+      }
+    } else if (paymentMode === "Momo") {
+      if (
+        !momoValues.sender_account_provider_name ||
+        !momoValues.sender_account_number ||
+        !momoValues.sender_account_holder_name ||
+        !momoValues.reference
+      ) {
+        toast({
+          title: "Incomplete Details",
+          description: "Please fill in all required payment details.",
+          variant: "destructive",
+        });
+        return false;
+      }
+    }
+    return true;
+  };
 
   return (
     <div>
@@ -404,19 +460,26 @@ function Pay({ handleNavigate }) {
                               </label>
                               <div className="md:w-[50%]">
                                 <DropdownSearch
-                                  options={[
-                                    {
-                                      unique_id: "1",
-                                      name: "Accra",
-                                    },
-                                    {
-                                      unique_id: "2",
-                                      name: "Kumasi",
-                                    },
-                                  ]?.map((data) => ({
-                                    id: data.unique_id,
-                                    label: data.name,
-                                  }))}
+                                  options={
+                                    regions.map((data, index) => ({
+                                      id: index.toString(),
+                                      label: data,
+                                    }))
+                                    //   [
+                                    //   {
+                                    //     unique_id: "1",
+                                    //     name: "Accra",
+                                    //   },
+                                    //   {
+                                    //     unique_id: "2",
+                                    //     name: "Kumasi",
+                                    //   },
+                                    // ]
+                                    // ?.map((data) => ({
+                                    //   id: data.unique_id,
+                                    //   label: data.name,
+                                    // }))
+                                  }
                                   // onOptionSelect={handleOptionSelect}
                                   placeholder={"Location"}
                                   disabled={payOption === "premium"}
@@ -433,19 +496,25 @@ function Pay({ handleNavigate }) {
                               </label>
                               <div className="md:w-[50%]">
                                 <DropdownSearch
-                                  options={[
-                                    {
-                                      unique_id: "1",
-                                      name: "ID001 - Mark Larbi",
-                                    },
-                                    {
-                                      unique_id: "2",
-                                      name: "ID002 - Aisha Danku",
-                                    },
-                                  ]?.map((data) => ({
-                                    id: data.unique_id,
-                                    label: data.name,
-                                  }))}
+                                  options={fetchedAttendants
+                                    ?.map((data) => ({
+                                      unique_id: data.id,
+                                      name: `${data.user_facing_attendant_id} - ${data.name}`,
+                                    }))
+                                    // [
+                                    //   {
+                                    //     unique_id: "1",
+                                    //     name: "ID001 - Mark Larbi",
+                                    //   },
+                                    //   {
+                                    //     unique_id: "2",
+                                    //     name: "ID002 - Aisha Danku",
+                                    //   },
+                                    // ]
+                                    ?.map((data) => ({
+                                      id: data.unique_id,
+                                      label: data.name,
+                                    }))}
                                   // onOptionSelect={handleOptionSelect}
                                   placeholder={"Select Attendant name"}
                                   disabled={payOption === "premium"}
@@ -889,6 +958,10 @@ function Pay({ handleNavigate }) {
                               type="button"
                               className="flex flex-row space-x-2 rounded-lg bg-primary p-2 text-white"
                               onClick={() => {
+                                const areAllFilled =
+                                  handleCheckIfValuesAreFilled();
+                                  console.log("Are all filled: ", areAllFilled);
+                                if (!areAllFilled) return;
                                 setShowPaymentSummary(true);
                               }}
                             >
