@@ -1,7 +1,17 @@
 import API_URL from "../baseUrlConfig";
 
-const getAllAttendants = async () => {
-  let url = `/embedded-stations/attendants/all`;
+const getAllStations = async () => {
+  let url = `/embedded-stations/all`;
+  try {
+    const response = await API_URL.get(url);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const getAllAttendantsByStation = async (stationID) => {
+  let url = `/embedded-stations/attendants/by-station-id/${stationID}`;
   try {
     const response = await API_URL.get(url);
     return response;
@@ -11,5 +21,6 @@ const getAllAttendants = async () => {
 };
 
 export default {
-  getAllAttendants,
+    getAllAttendantsByStation,
+  getAllStations
 };
