@@ -43,6 +43,8 @@ import {
   DollarSign,
   ChevronDown,
   ChevronRight,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import policyAndPlanApi from "../../services/api/policyAndPlanApi";
 import formatMoney from "../../lib/utils";
@@ -140,8 +142,14 @@ const MonthlySummary = ({ month, transactions, onTransactionSelect }) => {
             <p className="font-semibold">{totalLitres}L</p>
           </div>
           <div>
+            <p className="text-sm text-gray-500">Premium Due</p>
+            <p className="font-semibold">N/A</p>
+          </div>
+          <div>
             <p className="text-sm text-gray-500">Total Premiums</p>
-            <p className="font-semibold text-orange-600">GHS {totalPremiums}</p>
+            <p className="font-semibold text-orange-600 flex flex-row">
+              GHS {totalPremiums} <ArrowUp color="green"/> <ArrowDown color="red"/>
+            </p>
           </div>
         </div>
       </div>
