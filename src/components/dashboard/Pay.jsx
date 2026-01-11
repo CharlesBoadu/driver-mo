@@ -51,6 +51,8 @@ function Pay({ handleNavigate }) {
   const [loading, setLoading] = useState(false);
   const [transactionID, setTransactionID] = useState("");
   const [amount, setAmount] = useState(0);
+  const [attendant, setAttendant] = useState("");
+  const [stationName, setStationName] = useState("");
   const [bankValues, setBankValues] = useState({
     account_id: "",
     transaction_id: "",
@@ -114,6 +116,7 @@ function Pay({ handleNavigate }) {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [showPaymentSummary, setShowPaymentSummary] = useState(false);
   const [fetchedAttendants, setFetchedAttendants] = useState([]);
+  const [fetchedStations, setFetchedStations] = useState([]);
   const [clientDetails, setClientDetails] = useState(null);
 
   const regions = [
@@ -274,7 +277,13 @@ function Pay({ handleNavigate }) {
       setFetchedAttendants(response?.data);
     };
 
+    const fetchAllStations = async () => {
+      const response = await stationApi.getAllStations();
+      setFetchedStations(response?.data);
+    };
+
     fetchAllAttendants();
+    fetchAllStations();
   }, []);
 
   const totalUnits = useMemo(() => {
@@ -326,6 +335,22 @@ function Pay({ handleNavigate }) {
       }
     }
     return true;
+  };
+
+  const handleSelectStation = (data) => {
+    setFetchedAttendants([]);
+    setAttendant("");
+    setStationName(data?.label);
+    handleFetchStationAttendants(data?.id);
+  };
+
+  const handleSelectAttendant = (data) => {
+    setAttendant(data?.label);
+  };
+
+  const handleFetchStationAttendants = async (stationID) => {
+    const response = await stationApi.getAllAttendantsByStation(stationID);
+    setFetchedAttendants(response?.data);
   };
 
   return (
@@ -459,11 +484,22 @@ function Pay({ handleNavigate }) {
                                 <LocateIcon /> Station Name / Location
                               </label>
                               <div className="md:w-[50%]">
+                                {stationName !== "" && (
+                                  <div className="my-2">
+                                    Station selected:{" "}
+                                    <span className="bg-primary text-white text-sm font-semibold p-1">
+                                      {stationName}
+                                    </span>
+                                  </div>
+                                )}
                                 <DropdownSearch
                                   options={
-                                    regions.map((data, index) => ({
-                                      id: index.toString(),
-                                      label: data,
+                                    fetchedStations.map((data, index) => ({
+                                      id: data?.id,
+                                      label:
+                                        data.station_name +
+                                        " - " +
+                                        data.location_address,
                                     }))
                                     //   [
                                     //   {
@@ -480,7 +516,7 @@ function Pay({ handleNavigate }) {
                                     //   label: data.name,
                                     // }))
                                   }
-                                  // onOptionSelect={handleOptionSelect}
+                                  onOptionSelect={handleSelectStation}
                                   placeholder={"Location"}
                                   disabled={payOption === "premium"}
                                 />
@@ -495,6 +531,14 @@ function Pay({ handleNavigate }) {
                                 <User /> Attendant ID / Name
                               </label>
                               <div className="md:w-[50%]">
+                                {attendant !== "" && (
+                                  <div className="my-2">
+                                    Attendant selected:{" "}
+                                    <span className="bg-primary text-white text-sm font-semibold p-1">
+                                      {attendant}
+                                    </span>
+                                  </div>
+                                )}
                                 <DropdownSearch
                                   options={fetchedAttendants
                                     ?.map((data) => ({
@@ -515,7 +559,7 @@ function Pay({ handleNavigate }) {
                                       id: data.unique_id,
                                       label: data.name,
                                     }))}
-                                  // onOptionSelect={handleOptionSelect}
+                                  onOptionSelect={handleSelectAttendant}
                                   placeholder={"Select Attendant name"}
                                   disabled={payOption === "premium"}
                                 />
@@ -960,7 +1004,7 @@ function Pay({ handleNavigate }) {
                               onClick={() => {
                                 const areAllFilled =
                                   handleCheckIfValuesAreFilled();
-                                  console.log("Are all filled: ", areAllFilled);
+                                console.log("Are all filled: ", areAllFilled);
                                 if (!areAllFilled) return;
                                 setShowPaymentSummary(true);
                               }}
