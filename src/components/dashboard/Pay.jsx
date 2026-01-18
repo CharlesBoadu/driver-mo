@@ -118,10 +118,8 @@ function Pay({ handleNavigate }) {
   const [fetchedAttendants, setFetchedAttendants] = useState([]);
   const [fetchedStations, setFetchedStations] = useState([]);
   const [clientDetails, setClientDetails] = useState(null);
-  const [stationDetails, setStationDetails] = useState({
-    station_id: "",
-    station_name: "",
-  });
+  const [stationDetails, setStationDetails] = useState(null);
+  const [attendantDetails, setAttendantDetails] = useState(null);
 
   const regions = [
     "Ahafo",
@@ -175,6 +173,8 @@ function Pay({ handleNavigate }) {
       amount_paid: amountToPay,
       account_id: "7a573a61-5049-437b-918a-544720e538f3",
       location: stationDetails,
+      units_purchased: totalUnits.toFixed(2),
+      attendant: attendantDetails,
     };
 
     const finalMomoValues = {
@@ -197,9 +197,11 @@ function Pay({ handleNavigate }) {
       account_id: "7a573a61-5049-437b-918a-544720e538f3",
       sender_account_holder_name: momoValues?.sender_account_holder_name,
       location: stationDetails,
+      units_purchased: totalUnits.toFixed(2),
+      attendant: attendantDetails,
     };
 
-    const response = await paymentApi.makexPayment(
+    const response = await paymentApi.makePayment(
       paymentMode === "Momo" ? finalMomoValues : finalBankValues,
       paymentMode
     );
@@ -356,6 +358,10 @@ function Pay({ handleNavigate }) {
 
   const handleSelectAttendant = (data) => {
     setAttendant(data?.label);
+    setAttendantDetails({
+      attendant_id: data?.id,
+      attendant_name: data?.label,
+    });
   };
 
   const handleFetchStationAttendants = async (stationID) => {
