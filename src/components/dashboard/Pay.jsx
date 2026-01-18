@@ -118,6 +118,10 @@ function Pay({ handleNavigate }) {
   const [fetchedAttendants, setFetchedAttendants] = useState([]);
   const [fetchedStations, setFetchedStations] = useState([]);
   const [clientDetails, setClientDetails] = useState(null);
+  const [stationDetails, setStationDetails] = useState({
+    station_id: "",
+    station_name: "",
+  });
 
   const regions = [
     "Ahafo",
@@ -170,6 +174,7 @@ function Pay({ handleNavigate }) {
       sender_account_number: bankValues.account_number,
       amount_paid: amountToPay,
       account_id: "7a573a61-5049-437b-918a-544720e538f3",
+      location: stationDetails,
     };
 
     const finalMomoValues = {
@@ -191,9 +196,10 @@ function Pay({ handleNavigate }) {
       amount_paid: amountToPay,
       account_id: "7a573a61-5049-437b-918a-544720e538f3",
       sender_account_holder_name: momoValues?.sender_account_holder_name,
+      location: stationDetails,
     };
 
-    const response = await paymentApi.makePayment(
+    const response = await paymentApi.makexPayment(
       paymentMode === "Momo" ? finalMomoValues : finalBankValues,
       paymentMode
     );
@@ -342,6 +348,10 @@ function Pay({ handleNavigate }) {
     setAttendant("");
     setStationName(data?.label);
     handleFetchStationAttendants(data?.id);
+    setStationDetails({
+      station_id: data?.id,
+      station_name: data?.label,
+    });
   };
 
   const handleSelectAttendant = (data) => {
@@ -644,7 +654,7 @@ function Pay({ handleNavigate }) {
                               htmlFor="bankName"
                               className="block flex flex-row text-sm font-medium text-gray-700"
                             >
-                              <Home /> Sender Network Provider
+                              <Home /> Sender's Network Provider
                             </label>
                             <select
                               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
@@ -672,13 +682,13 @@ function Pay({ handleNavigate }) {
                               htmlFor="accountHolder"
                               className="block flex flex-row text-sm font-medium text-gray-700"
                             >
-                              <User /> Sender Account Holder
+                              <User /> Sender's Account Holder
                             </label>
                             <div>
                               <input
                                 type="text"
                                 name="accountHolder"
-                                placeholder="Enter sender Account holder"
+                                placeholder="Enter sender's Account holder"
                                 id="accountHolder"
                                 className={`mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm`}
                                 value={momoValues.sender_account_holder_name}
@@ -699,13 +709,13 @@ function Pay({ handleNavigate }) {
                               htmlFor="accountNumber"
                               className="block flex flex-row text-sm font-medium text-gray-700"
                             >
-                              <User /> Sender Account Number
+                              <User /> Sender's Account Number
                             </label>
                             <div>
                               <input
                                 type="text"
                                 name="accountNumber"
-                                placeholder="Enter Sender Account Number"
+                                placeholder="Enter Sender's Account Number"
                                 id="accountNumber"
                                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
                                 // disabled
