@@ -191,7 +191,7 @@ const MonthlySummary = ({ month, transactions, onTransactionSelect }) => {
                         <div className="font-medium">{item.date}</div>
                         <div className="text-sm text-gray-500">{item.time}</div>
                       </TableCell>
-                      <TableCell>{item.location}</TableCell>
+                      <TableCell>{item.location?.station_name}</TableCell>
                       <TableCell className="text-right font-semibold text-orange-600">
                         GHS {formatMoney(item.amount)}
                       </TableCell>
