@@ -107,15 +107,18 @@ const historyData = {
 };
 
 const MonthlySummary = ({ month, transactions, onTransactionSelect }) => {
-  console.log(transactions);
+  console.log("Transactiopns", transactions);
   const [isOpen, setIsOpen] = useState(true);
   const totalPurchase = transactions
     ?.reduce((acc, t) => acc + parseFloat(t.amount), 0)
     .toFixed(2);
-  const totalLitres =
-    transactions?.reduce((acc, t) => acc + parseFloat(t.quantity), 0) || "N/A";
+  const totalLitres = transactions[0]?.totalLitres;
+  const premiumDue = transactions[0]?.premiumDue;
+  const deficitPremium = transactions[0]?.deficitPremium;
+  // reduce((acc, t) => acc + parseFloat(t.totalLitres), 0) ||
+  // ("N/A");
   const totalPremiums = transactions
-    ?.reduce((acc, t) => acc + parseFloat(t.earned_premium || 0), 0)
+    ?.reduce((acc, t) => acc + parseFloat(t.premiumDue || 0), 0)
     .toFixed(2);
 
   return (
@@ -143,12 +146,17 @@ const MonthlySummary = ({ month, transactions, onTransactionSelect }) => {
           </div>
           <div>
             <p className="text-sm text-gray-500">Premium Due</p>
-            <p className="font-semibold">N/A</p>
+            <p className="font-semibold">GHS {premiumDue}</p>
           </div>
           <div>
             <p className="text-sm text-gray-500">Total Premiums</p>
             <p className="font-semibold text-orange-600 flex flex-row">
-              GHS {totalPremiums} <ArrowUp color="green"/> <ArrowDown color="red"/>
+              GHS {totalPremiums}{" "}
+              {deficitPremium < 0 ? (
+                <ArrowUp color="green" />
+              ) : (
+                <ArrowDown color="red" />
+              )}
             </p>
           </div>
         </div>
@@ -185,7 +193,7 @@ const MonthlySummary = ({ month, transactions, onTransactionSelect }) => {
                       </TableCell>
                       <TableCell>{item.location}</TableCell>
                       <TableCell className="text-right font-semibold text-orange-600">
-                        {item.premium}
+                        GHS {formatMoney(item.amount)}
                       </TableCell>
                       <TableCell className="text-center">
                         <DialogTrigger asChild>
@@ -252,13 +260,23 @@ function PurchaseHistory() {
               data?.month,
               data?.transactions?.map((item) => ({
                 id: item?.transaction_id || "N/A",
-                date: item?.date_paid.split("T")[0] || "N/A",
-                time: item?.date_paid.split("T")[1] || "N/A",
+                date:
+                  item?.date_paid.split("T")[0] ||
+                  item?.date_paid.split(" ")[0] ||
+                  "N/A",
+                time:
+                  item?.date_paid.split("T")[1] ||
+                  item?.date_paid.split(" ")[1] ||
+                  "N/A",
                 location: item?.location || "N/A",
                 quantity: item?.total_litres || "N/A",
-                amount: formatMoney(item?.total_amount_paid || "0.00"),
+                amount: item?.total_amount_paid || "0.00",
                 premium: item?.earned_premium || "0.00",
                 paymentMethod: item?.payment_method || "N/A",
+                premiumDue: data?.premium_due || "N/A",
+                deficitPremium: data?.deficit_premium || "N/A",
+                totalLitres:
+                  data?.total_units === 0 ? "0" : data?.total_units || "N/A",
               })) || [],
             ])
           )
@@ -360,12 +378,8 @@ function PurchaseHistory() {
                         <span className="text-sm font-medium text-gray-500">
                           Date & Time:
                         </span>
-                        <span>
-                          {selectedTransaction.date} 
-                        </span>
-                        <span>
-                          {selectedTransaction.time}
-                        </span>
+                        <span>{selectedTransaction.date}</span>
+                        <span>{selectedTransaction.time}</span>
                       </div>
                       <div className="grid grid-cols-2 items-center gap-4">
                         <span className="text-sm font-medium text-gray-500">
