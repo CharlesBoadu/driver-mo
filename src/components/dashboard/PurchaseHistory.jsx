@@ -248,7 +248,7 @@ function PurchaseHistory() {
       if (response?.data?.length > 0) {
         setFetchedPremiumHistory(
           Object.fromEntries(
-            (response?.data || []).map((data) => [
+            (response?.data?.reverse() || []).map((data) => [
               data?.month,
               data?.transactions?.map((item) => ({
                 id: item?.transaction_id || "N/A",
@@ -361,7 +361,10 @@ function PurchaseHistory() {
                           Date & Time:
                         </span>
                         <span>
-                          {selectedTransaction.date}, {selectedTransaction.time}
+                          {selectedTransaction.date} 
+                        </span>
+                        <span>
+                          {selectedTransaction.time}
                         </span>
                       </div>
                       <div className="grid grid-cols-2 items-center gap-4">
