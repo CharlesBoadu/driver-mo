@@ -189,7 +189,9 @@ const MonthlySummary = ({ month, transactions, onTransactionSelect }) => {
                         <div className="font-medium">{item.date}</div>
                         <div className="text-sm text-gray-500">{item.time}</div>
                       </TableCell>
-                      <TableCell>{item.location?.station_name || "N/A"}</TableCell>
+                      <TableCell>
+                        {item.location?.station_name || "N/A"}
+                      </TableCell>
                       <TableCell className="text-right font-semibold text-orange-600">
                         GHS {formatMoney(item.earnedPremium)}
                       </TableCell>
@@ -258,10 +260,9 @@ function PurchaseHistory() {
               data?.month,
               data?.transactions?.map((item) => ({
                 id: item?.transaction_id || "N/A",
-                date:
-                  item?.date_paid.split("T")[0] ||
-                  item?.date_paid.split(" ")[0] ||
-                  "N/A",
+                date: item?.date_paid.includes("T")
+                  ? item?.date_paid.split("T")[0]
+                  : item?.date_paid.split(" ")[0] || "N/A",
                 time:
                   item?.date_paid.split("T")[1] ||
                   item?.date_paid.split(" ")[1] ||
@@ -389,14 +390,14 @@ function PurchaseHistory() {
                           Station Name / Location:
                         </span>
                         <span>
-                          {selectedTransaction.location?.station_name}
+                          {selectedTransaction.location?.station_name || "N/A"}
                         </span>
                       </div>
-                      <div className="grid grid-col s-2 items-center gap-4">
+                      <div className="grid grid-cols-2 items-center gap-4">
                         <span className="text-sm font-medium text-gray-500">
                           Fuel Quantity:
                         </span>
-                        <span>{selectedTransaction.quantity}</span>
+                        <span>{selectedTransaction.totalLitres || "N/A"}L</span>
                       </div>
                       <div className="grid grid-cols-2 items-center gap-4">
                         <span className="text-sm font-medium text-gray-500">
