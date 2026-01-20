@@ -117,9 +117,7 @@ const MonthlySummary = ({ month, transactions, onTransactionSelect }) => {
   const deficitPremium = transactions[0]?.deficitPremium;
   // reduce((acc, t) => acc + parseFloat(t.totalLitres), 0) ||
   // ("N/A");
-  const totalPremiums = transactions
-    ?.reduce((acc, t) => acc + parseFloat(t.premiumDue || 0), 0)
-    .toFixed(2);
+  const totalPremiums = transactions[0]?.totalEarnedPremium;
 
   return (
     <div className="border-b">
@@ -191,9 +189,9 @@ const MonthlySummary = ({ month, transactions, onTransactionSelect }) => {
                         <div className="font-medium">{item.date}</div>
                         <div className="text-sm text-gray-500">{item.time}</div>
                       </TableCell>
-                      <TableCell>{item.location?.station_name}</TableCell>
+                      <TableCell>{item.location?.station_name || "N/A"}</TableCell>
                       <TableCell className="text-right font-semibold text-orange-600">
-                        GHS {formatMoney(item.amount)}
+                        GHS {formatMoney(item.earnedPremium)}
                       </TableCell>
                       <TableCell className="text-center">
                         <DialogTrigger asChild>
@@ -274,6 +272,8 @@ function PurchaseHistory() {
                 premium: item?.earned_premium || "0.00",
                 paymentMethod: item?.payment_method || "N/A",
                 premiumDue: data?.premium_due || "N/A",
+                earnedPremium: item?.earned_premium || "N/A",
+                totalEarnedPremium: data?.total_earned_premium || "N/A",
                 deficitPremium: data?.deficit_premium || "N/A",
                 totalLitres:
                   data?.total_units === 0 ? "0" : data?.total_units || "N/A",
@@ -378,16 +378,21 @@ function PurchaseHistory() {
                         <span className="text-sm font-medium text-gray-500">
                           Date & Time:
                         </span>
-                        <span>{selectedTransaction.date}</span>
-                        <span>{selectedTransaction.time}</span>
+                        <span>
+                          {selectedTransaction.date} &{" "}
+                          {selectedTransaction.time}
+                        </span>
+                        {/* <span>{selectedTransaction.time}</span> */}
                       </div>
                       <div className="grid grid-cols-2 items-center gap-4">
                         <span className="text-sm font-medium text-gray-500">
                           Station Name / Location:
                         </span>
-                        <span>{selectedTransaction.location}</span>
+                        <span>
+                          {selectedTransaction.location?.station_name}
+                        </span>
                       </div>
-                      <div className="grid grid-cols-2 items-center gap-4">
+                      <div className="grid grid-col s-2 items-center gap-4">
                         <span className="text-sm font-medium text-gray-500">
                           Fuel Quantity:
                         </span>
