@@ -230,11 +230,71 @@ function PurchaseHistory() {
   const [loading, setLoading] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
 
+  const flattenTransactions = (data = {}) => {
+    return Object.entries(data).flatMap(([month, transactions]) =>
+      transactions.map((t) => ({
+        month,
+        transaction_id: t.id,
+        date: t.date,
+        time: t.time,
+        station: t.location?.station_name || "N/A",
+        litres: t.units || "0",
+        amount: t.amount,
+        earned_premium: t.earnedPremium,
+        payment_method: t.paymentMethod,
+      }))
+    );
+  };
+
+  const downloadCSV = (rows, filename) => {
+    if (!rows.length) return;
+
+    const headers = Object.keys(rows[0]);
+    const csvContent = [
+      headers.join(","), // header row
+      ...rows.map((row) => headers.map((h) => `"${row[h] ?? ""}"`).join(",")),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.click();
+
+    URL.revokeObjectURL(url);
+  };
+
   const handleDownload = (format) => {
-    toast({
-      title: "🚧 Download Starting!",
-      description: `This feature isn't fully implemented, but your ${format.toUpperCase()} download would start now! 🚀`,
-    });
+    if (
+      !fetchedPremiumHistory ||
+      Object.keys(fetchedPremiumHistory).length === 0
+    ) {
+      toast({
+        title: "No data available",
+        description: "There is no purchase history to download.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const rows = flattenTransactions(fetchedPremiumHistory);
+
+    if (format === "csv") {
+      downloadCSV(rows, "purchase-history.csv");
+      toast({
+        title: "Download complete ✅",
+        description: "CSV file downloaded successfully.",
+      });
+    }
+
+    if (format === "pdf") {
+      toast({
+        title: "PDF coming soon 🚧",
+        description: "CSV download is currently supported.",
+      });
+    }
   };
 
   const getPaymentIcon = (method) => {
@@ -347,12 +407,27 @@ function PurchaseHistory() {
                     <SelectItem value="last90">Last 90 Days</SelectItem>
                   </SelectContent>
                 </Select>
+                {/* <Select onValueChange={(value) => handleDownload(value)}>
+                  <SelectTrigger className="w-full md:w-[180px] bg-primary text-white">
+                    <div className="flex items-center gap-2">
+                      <Download className="mr-2 h-4 w-4" />
+                      <span>Download</span>
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="download-option">
+                      Select Download Option
+                    </SelectItem>
+                    <SelectItem value="csv">Download CSV</SelectItem>
+                    <SelectItem value="pdf">Download PDF</SelectItem>
+                  </SelectContent>
+                </Select> */}
                 <Button
-                  onClick={() => handleDownload("pdf")}
+                  onClick={() => handleDownload("csv")}
                   className="w-full md:w-auto"
                 >
                   <Download className="mr-2 h-4 w-4" />
-                  Download PDF
+                  Download CSV
                 </Button>
               </div>
 
