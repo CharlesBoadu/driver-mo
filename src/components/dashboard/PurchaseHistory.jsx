@@ -230,7 +230,7 @@ function PurchaseHistory() {
   const [loading, setLoading] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [dateFilter, setDateFilter] = useState(null);
+  const [dateFilter, setDateFilter] = useState("all");
 
   const flattenTransactions = (data = {}) =>
     Object.entries(data).flatMap(([month, transactions]) =>
