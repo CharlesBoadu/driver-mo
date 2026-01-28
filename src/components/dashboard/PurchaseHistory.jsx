@@ -229,22 +229,18 @@ function PurchaseHistory() {
   const [fetchedPremiumHistory, setFetchedPremiumHistory] = useState(null);
   const [loading, setLoading] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dateFilter, setDateFilter] = useState(null);
 
-  const flattenTransactions = (data = {}) => {
-    return Object.entries(data).flatMap(([month, transactions]) =>
+  const flattenTransactions = (data = {}) =>
+    Object.entries(data).flatMap(([month, transactions]) =>
       transactions.map((t) => ({
+        ...t,
         month,
-        transaction_id: t.id,
-        date: t.date,
-        time: t.time,
-        station: t.location?.station_name || "N/A",
-        litres: t.units || "0",
-        amount: t.amount,
-        earned_premium: t.earnedPremium,
-        payment_method: t.paymentMethod,
+        searchableLocation: t.location?.station_name?.toLowerCase() || "",
+        parsedDate: new Date(`${t.date} ${t.time || ""}`),
       }))
     );
-  };
 
   const downloadCSV = (rows, filename) => {
     if (!rows.length) return;
@@ -282,10 +278,23 @@ function PurchaseHistory() {
     const rows = flattenTransactions(fetchedPremiumHistory);
 
     if (format === "csv") {
-      downloadCSV(rows, "purchase-history.csv");
+      const rows = filteredTransactions.map((t) => ({
+        Month: t.month,
+        TransactionID: t.id,
+        Date: t.date,
+        Time: t.time,
+        Station: t.location?.station_name || "N/A",
+        Litres: t.units,
+        Amount: t.amount,
+        Premium: t.earnedPremium,
+        PaymentMethod: t.paymentMethod,
+      }));
+
+      downloadCSV(rows, "filtered-purchase-history.csv");
+
       toast({
         title: "Download complete ✅",
-        description: "CSV file downloaded successfully.",
+        description: "Filtered CSV downloaded successfully.",
       });
     }
 
@@ -309,6 +318,43 @@ function PurchaseHistory() {
         return null;
     }
   };
+
+  const filteredTransactions = React.useMemo(() => {
+    if (!fetchedPremiumHistory) return [];
+
+    let rows = flattenTransactions(fetchedPremiumHistory);
+
+    // 🔍 Location search
+    if (searchTerm.trim()) {
+      rows = rows.filter((t) =>
+        t.searchableLocation.includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // 📅 Date filter (skip if "all")
+    if (dateFilter !== "all") {
+      const daysMap = {
+        last7: 7,
+        last30: 30,
+        last90: 90,
+      };
+
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - daysMap[dateFilter]);
+
+      rows = rows.filter((t) => t.parsedDate >= cutoff);
+    }
+
+    return rows;
+  }, [fetchedPremiumHistory, searchTerm, dateFilter]);
+
+  const groupedFilteredHistory = React.useMemo(() => {
+    return filteredTransactions.reduce((acc, t) => {
+      acc[t.month] = acc[t.month] || [];
+      acc[t.month].push(t);
+      return acc;
+    }, {});
+  }, [filteredTransactions]);
 
   useEffect(() => {
     const fetchPremiumHistory = async () => {
@@ -392,9 +438,11 @@ function PurchaseHistory() {
                   <Input
                     placeholder="Search by location..."
                     className="pl-10"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-                <Select>
+                <Select onValueChange={setDateFilter}>
                   <SelectTrigger className="w-full md:w-[180px]">
                     <div className="flex items-center gap-2">
                       <Filter className="w-4 h-4" />
@@ -402,6 +450,7 @@ function PurchaseHistory() {
                     </div>
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
                     <SelectItem value="last7">Last 7 Days</SelectItem>
                     <SelectItem value="last30">Last 30 Days</SelectItem>
                     <SelectItem value="last90">Last 90 Days</SelectItem>
@@ -433,7 +482,7 @@ function PurchaseHistory() {
 
               <Dialog>
                 <div className="rounded-md border">
-                  {Object.entries(fetchedPremiumHistory || []).map(
+                  {Object.entries(groupedFilteredHistory || {}).map(
                     ([month, transactions]) => (
                       <MonthlySummary
                         key={month}
