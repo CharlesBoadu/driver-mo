@@ -31,6 +31,7 @@ function ChangePasswordPage() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [loginMethod, setLoginMethod] = useState("phone_password");
   const [loading, setLoading] = useState(false);
   const [clientForm, setClientForm] = useState({
@@ -169,8 +170,8 @@ function ChangePasswordPage() {
                         <div className="relative">
                           <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                           <Input
-                            id="client-phone"
-                            type="tel"
+                            id="client-new-password"
+                            type={showNewPassword ? "text" : "password"}
                             placeholder="Enter new password"
                             value={clientForm.phone}
                             onChange={(e) =>
@@ -181,6 +182,17 @@ function ChangePasswordPage() {
                             }
                             className="pl-10"
                           />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-700"
+                          >
+                            {showNewPassword ? (
+                              <Eye className="w-5 h-5" />
+                            ) : (
+                              <EyeOff className="w-5 h-5" />
+                            )}
+                          </button>
                         </div>
                       </div>
                       <div className="space-y-2">
@@ -210,9 +222,9 @@ function ChangePasswordPage() {
                             className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-700"
                           >
                             {showConfirmPassword ? (
-                              <EyeOff className="w-5 h-5" />
-                            ) : (
                               <Eye className="w-5 h-5" />
+                            ) : (
+                              <EyeOff className="w-5 h-5" />
                             )}
                           </button>
                         </div>
