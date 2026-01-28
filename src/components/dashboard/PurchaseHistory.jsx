@@ -107,7 +107,7 @@ const historyData = {
 };
 
 const MonthlySummary = ({ month, transactions, onTransactionSelect }) => {
-  console.log("Transactiopns", transactions);
+  // console.log("Transactiopns", transactions);
   const [isOpen, setIsOpen] = useState(true);
   const totalPurchase = transactions
     ?.reduce((acc, t) => acc + parseFloat(t.amount), 0)
@@ -182,32 +182,39 @@ const MonthlySummary = ({ month, transactions, onTransactionSelect }) => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {transactions.map((item, index) => (
-                    <TableRow key={item.id}>
-                      <TableCell>{index + 1}</TableCell>
-                      <TableCell>
-                        <div className="font-medium">{item.date}</div>
-                        <div className="text-sm text-gray-500">{item.time}</div>
-                      </TableCell>
-                      <TableCell>
-                        {item.location?.station_name || "N/A"}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold text-orange-600">
-                        GHS {formatMoney(item.earnedPremium)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onTransactionSelect(item)}
-                          >
-                            <Eye className="w-5 h-5 text-gray-500" />
-                          </Button>
-                        </DialogTrigger>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {transactions.map(
+                    (item, index) => (
+                      console.log("item", item),
+                      (
+                        <TableRow key={item.id}>
+                          <TableCell>{index + 1}</TableCell>
+                          <TableCell>
+                            <div className="font-medium">{item.date}</div>
+                            <div className="text-sm text-gray-500">
+                              {item.time}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {item.location?.station_name || "N/A"}
+                          </TableCell>
+                          <TableCell className="text-right font-semibold text-orange-600">
+                            GHS {formatMoney(item.earnedPremium)}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => onTransactionSelect(item)}
+                              >
+                                <Eye className="w-5 h-5 text-gray-500" />
+                              </Button>
+                            </DialogTrigger>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    )
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -276,6 +283,10 @@ function PurchaseHistory() {
                 earnedPremium: item?.earned_premium || "N/A",
                 totalEarnedPremium: data?.total_earned_premium || "N/A",
                 deficitPremium: data?.deficit_premium || "N/A",
+                units:
+                  item?.units_purchased === 0
+                    ? "0"
+                    : item?.units_purchased || "N/A",
                 totalLitres:
                   data?.total_units === 0 ? "0" : data?.total_units || "N/A",
               })) || [],
@@ -397,7 +408,7 @@ function PurchaseHistory() {
                         <span className="text-sm font-medium text-gray-500">
                           Fuel Quantity:
                         </span>
-                        <span>{selectedTransaction.totalLitres || "N/A"}L</span>
+                        <span>{selectedTransaction.units || "N/A"}L</span>
                       </div>
                       <div className="grid grid-cols-2 items-center gap-4">
                         <span className="text-sm font-medium text-gray-500">
