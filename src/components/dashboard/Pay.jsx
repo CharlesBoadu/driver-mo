@@ -369,6 +369,22 @@ function Pay({ handleNavigate }) {
     setFetchedAttendants(response?.data);
   };
 
+  const handleDiscountCalculation = () => {
+    const isAddon =
+      clientDetails?.plan?.plan_details?.premium_parameter == "Add-on";
+    const productToUse = clientDetails?.product?.item_product;
+    const discountToUse =
+      clientDetails?.plan?.product_details?.linked_item_product?.find(
+        (product) =>
+          product?.product_name?.toLowerCase() === productToUse?.toLowerCase()
+      )?.discount_rate_unit;
+
+    if (!discountToUse) return 0;
+    if (isAddon) {
+      return amountToPay + discountToUse;
+    }
+  };
+
   return (
     <div>
       <form onSubmit={handlePayment} className="space-y-8">
@@ -778,7 +794,12 @@ function Pay({ handleNavigate }) {
                                 id="amountPaid"
                                 disabled
                                 className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                value={amountToPay}
+                                value={
+                                  clientDetails?.plan?.plan_details
+                                    ?.premium_parameter == "Add-on"
+                                    ? handleDiscountCalculation()
+                                    : amountToPay
+                                }
                               />{" "}
                             </div>
                           </div>
