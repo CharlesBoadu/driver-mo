@@ -1041,7 +1041,6 @@ function Pay({ handleNavigate }) {
                               onClick={() => {
                                 const areAllFilled =
                                   handleCheckIfValuesAreFilled();
-                                console.log("Are all filled: ", areAllFilled);
                                 if (!areAllFilled) return;
                                 setShowPaymentSummary(true);
                               }}
@@ -1092,7 +1091,12 @@ function Pay({ handleNavigate }) {
                 <Banknote />
                 Amount to Pay:
               </span>
-              <span>{formatMoney(amountToPay)}</span>
+              <span>
+                {clientDetails?.plan?.product_details?.premium_parameter ==
+                "Add-on"
+                  ? handleDiscountCalculation()
+                  : formatMoney(amountToPay)}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="font-semibold flex flex-row">
