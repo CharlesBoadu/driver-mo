@@ -159,7 +159,10 @@ function Pay({ handleNavigate }) {
       user_id: clientDetails?.id,
       policy_holder_id: clientDetails?.policy_holder_id,
       transaction_type: payOption?.toLowerCase(),
-      total_amount_paid: amountToPay,
+      total_amount_paid:
+        clientDetails?.plan?.product_details?.premium_parameter == "Add-on"
+          ? handleDiscountCalculation()
+          : amountToPay,
       date_paid: new Date().toISOString().slice(0, 19).replace("T", " ")[0],
       frequency: "daily",
       members_covered: clientDetails?.id,
@@ -185,7 +188,10 @@ function Pay({ handleNavigate }) {
       user_id: clientDetails?.id,
       policy_holder_id: clientDetails?.policy_holder_id,
       transaction_type: payOption?.toLowerCase(), // premium/claim
-      total_amount_paid: amountToPay,
+      total_amount_paid:
+        clientDetails?.plan?.product_details?.premium_parameter == "Add-on"
+          ? handleDiscountCalculation()
+          : amountToPay,
       date_paid: new Date().toISOString().slice(0, 19).replace("T", " "),
       frequency: "daily",
       members_covered: clientDetails?.id,
@@ -816,7 +822,7 @@ function Pay({ handleNavigate }) {
                           </div>
 
                           {/* Transaction Date & Time */}
-                          <div>
+                          {/* <div>
                             <label
                               htmlFor="date"
                               className="block flex flex-row text-sm font-medium text-gray-700"
@@ -838,7 +844,7 @@ function Pay({ handleNavigate }) {
                                 }
                               />{" "}
                             </div>
-                          </div>
+                          </div> */}
                         </div>
                       )}
 
