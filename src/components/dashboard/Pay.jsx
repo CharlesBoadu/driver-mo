@@ -383,7 +383,12 @@ function Pay({ handleNavigate }) {
 
     if (!discountToUse) return 0;
     if (isAddon) {
-      return Number(Number(amountToPay) + Number(discountToUse)).toFixed(2);
+      return Number(
+        Number(amountToPay) +
+          (
+            Number(discountToUse).toFixed(2) * Number(totalUnits).toFixed(2)
+          ).toFixed(2)
+      );
     }
   };
 
