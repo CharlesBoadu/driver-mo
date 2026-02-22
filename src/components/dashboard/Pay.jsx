@@ -196,7 +196,10 @@ function Pay({ handleNavigate }) {
       reference: momoValues.reference,
       account_holder:
         clientDetails?.first_name + " " + clientDetails?.last_name,
-      amount_paid: amountToPay,
+      amount_paid:
+        clientDetails?.plan?.product_details?.premium_parameter == "Add-on"
+          ? handleDiscountCalculation()
+          : amountToPay,
       account_id: "7a573a61-5049-437b-918a-544720e538f3",
       sender_account_holder_name: momoValues?.sender_account_holder_name,
       location: stationDetails,
