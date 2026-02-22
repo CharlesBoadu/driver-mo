@@ -385,10 +385,10 @@ function Pay({ handleNavigate }) {
     if (isAddon) {
       return Number(
         Number(amountToPay) +
-          (
+          Number(
             Number(discountToUse).toFixed(2) * Number(totalUnits).toFixed(2)
-          ).toFixed(2)
-      );
+          )
+      ).toFixed(2);
     }
   };
 
