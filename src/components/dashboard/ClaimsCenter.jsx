@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -35,6 +35,7 @@ import {
   Banknote,
   Dot,
   Circle,
+  LoaderIcon,
 } from "lucide-react";
 import {
   Table,
@@ -60,6 +61,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import claimsApi from "../../services/api/claims";
 
 const claimsHistory = [
   {
@@ -116,28 +118,51 @@ const ClaimSection = ({ title, children }) => (
   </div>
 );
 
-const DocumentUploader = ({ id, label }) => (
-  <div className="flex items-center justify-between p-2 border rounded-md bg-gray-50/50">
-    <div className="flex items-center space-x-2">
-      <Checkbox id={id} />
-      <label
-        htmlFor={id}
-        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-      >
-        {label}
-      </label>
+const DocumentUploader = ({
+  id,
+  label,
+  checked,
+  onCheckedChange,
+  onFileChange,
+  fileName,
+}) => {
+  return (
+    <div className="flex items-center justify-between p-2 border rounded-md bg-gray-50/50">
+      <div className="flex items-center space-x-2">
+        <Checkbox id={id} checked={checked} onCheckedChange={onCheckedChange} />
+        <label htmlFor={id} className="text-sm font-medium leading-none">
+          {label}
+        </label>
+      </div>
+
+      <div className="flex items-center gap-2">
+        {fileName && (
+          <span className="text-xs text-green-600 truncate max-w-[120px]">
+            {fileName}
+          </span>
+        )}
+
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="relative overflow-hidden"
+        >
+          <Upload className="w-3 h-3 mr-1" />
+          Upload
+          <input
+            type="file"
+            className="absolute inset-0 opacity-0 cursor-pointer"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onFileChange(file);
+            }}
+          />
+        </Button>
+      </div>
     </div>
-    <Button
-      type="button"
-      variant="outline"
-      size="sm"
-      className="flex items-center gap-2"
-    >
-      <Upload className="w-3 h-3" />
-      Upload
-    </Button>
-  </div>
-);
+  );
+};
 
 const InputWithIcon = ({ icon: Icon, ...props }) => (
   <div className="relative">
@@ -152,37 +177,164 @@ function ClaimsCenter() {
   const [claimant, setClaimant] = useState("");
   const [formDetails, setFormDetails] = useState({});
   const [selectedClaim, setSelectedClaim] = useState(null);
+  const [fileLoading, setFileLoading] = useState(false);
+  const [clientDetails, setClientDetails] = useState(null);
+  const [fetchedClaims, setFetchedClaims] = useState([]);
+
+  useEffect(() => {
+    const clientData = JSON.parse(localStorage.getItem("clientDetails"));
+    setClientDetails(clientData);
+
+    const getAllClaims = async () => {
+      const response = await claimsApi.getAllClaims();
+      setFetchedClaims(
+        response?.data?.map((data) => ({
+          id: data?.claim_id || "N/A",
+          date: data?.claim_date || "N/A",
+          type: data?.claim_type || "N/A",
+          status: data?.status || "N/A",
+          amount: data?.amount || "N/A",
+          details: {
+            type: data?.claim_type || "N/A",
+            name: data?.policy_holder_details?.name || "N/A",
+            dateOfDeath: data?.claim_date || "N/A",
+            cause: data?.cause_of_death || "N/A",
+          },
+        })) || []
+      );
+    };
+
+    getAllClaims();
+  }, []);
+
+  const getPolicyData = {
+    principal: {
+      name: clientDetails?.first_name + " " + clientDetails?.last_name,
+      email: clientDetails?.email,
+      contact: clientDetails?.msisdn,
+      relationship: "policyholder",
+    },
+    secondary1: {
+      name: clientDetails?.dependent_one?.name,
+      email: clientDetails?.dependent_one?.email,
+      contact: clientDetails?.dependent_one?.msisdn,
+      relationship: clientDetails?.dependent_one?.relationship,
+    },
+    secondary2: {
+      name: clientDetails?.dependent_two?.name,
+      email: clientDetails?.dependent_two?.email,
+      contact: clientDetails?.dependent_two?.msisdn,
+      relationship: clientDetails?.dependent_two?.relationship,
+    },
+  };
 
   const handleClaimantChange = (value) => {
     setClaimant(value);
-    const data = policyData[value];
+    const data = getPolicyData[value];
     if (data) {
       setFormDetails((prev) => ({
         ...prev,
         fullName: data.name,
         contactNumber: data.contact,
         email: data.email,
+        relationship: data.relationship,
       }));
     }
   };
 
+  console.log("Claimant", claimant)
+
   const handleClaimTypeChange = (value) => {
     setClaimType(value);
     setClaimant("");
-    setFormDetails({});
+    setFormDetails((prev) => ({
+      ...prev,
+      claim_type: value,
+    }));
     if (value === "tpd" || value === "hospitalization") {
       handleClaimantChange("principal");
     }
   };
 
-  const handleSubmitClaim = (e) => {
-    e.preventDefault();
-    toast({
-      title: "🚧 Claim Submitted!",
-      description:
-        "This is a demo. Your claim would be processed by our team shortly. 🚀",
-    });
-    setView("history");
+  const handleSubmitClaim = async (e) => {
+    try {
+      e.preventDefault();
+      setFileLoading(true);
+
+      const finalValues = {
+        claim_type: formDetails?.claim_type,
+        policy_holder_details: {
+          id: "",
+          name: formDetails?.fullName,
+          relationship: formDetails?.relationship,
+          email: formDetails?.email,
+          phone_number: formDetails?.contactNumber,
+          sex: "",
+          dob: "",
+        },
+        claim_date: "",
+        is_declaration_submission_checked: formDetails?.declaration,
+        cause_of_death: formDetails?.cause_of_death, //optional
+        place_of_death: formDetails?.place_of_death, //optional
+        death_certificate: "", //optional
+        medical_reports: "", //optional
+        proof_of_relationship: "", //optional
+        police_report: "", //optional
+      };
+      const response = await claimsApi.fileNewClaim(finalValues);
+      if (response?.code === "GS200") {
+        toast({
+          title: "🚧 Claim Submitted!",
+          description: "Your claim would be processed by our team shortly",
+        });
+        setView("history");
+      } else {
+        toast({
+          title: "Failed to file a claim",
+          description: response?.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.log("Error filing new claim", error);
+    } finally {
+      setFileLoading(false);
+    }
+  };
+
+  console.log("Form Details", formDetails);
+
+  const handleInputChange = (field) => (e) => {
+    setFormDetails((prev) => ({
+      ...prev,
+      [field]: e.target.value,
+    }));
+  };
+
+  const handleDocumentCheck = (docId, checked) => {
+    setFormDetails((prev) => ({
+      ...prev,
+      documents: {
+        ...prev.documents,
+        [docId]: {
+          ...prev.documents?.[docId],
+          required: checked,
+        },
+      },
+    }));
+  };
+
+  const handleDocumentFile = (docId, file) => {
+    setFormDetails((prev) => ({
+      ...prev,
+      documents: {
+        ...prev.documents,
+        [docId]: {
+          ...prev.documents?.[docId],
+          file,
+        },
+      },
+    }));
   };
 
   return (
@@ -225,45 +377,61 @@ function ClaimsCenter() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {claimsHistory.map((claim, index) => (
-                    <TableRow key={claim.id}>
-                      <TableCell>{index + 1}</TableCell>
-                      <TableCell className="font-medium">{claim.id}</TableCell>
-                      <TableCell>{claim.date}</TableCell>
-                      <TableCell>{claim.type}</TableCell>
-                      <TableCell>
-                        <span
-                          className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                            claim.status === "Approved"
-                              ? "bg-green-100 text-green-800"
-                              : claim.status === "Pending"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {claim.status}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {claim.amount}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setSelectedClaim(claim)}
-                          >
-                            <Eye className="w-5 h-5 text-gray-500" />
-                          </Button>
-                        </DialogTrigger>
+                  {!fetchedClaims || fetchedClaims.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={7}
+                        className="text-center py-6 text-gray-500"
+                      >
+                        No Claims found
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    <>
+                      {fetchedClaims?.map((claim, index) => (
+                        <TableRow key={claim.id}>
+                          <TableCell>{index + 1}</TableCell>
+                          <TableCell className="font-medium">
+                            {claim.id}
+                          </TableCell>
+                          <TableCell>{claim.date}</TableCell>
+                          <TableCell>{claim.type}</TableCell>
+                          <TableCell>
+                            <span
+                              className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                claim.status === "Approved"
+                                  ? "bg-green-100 text-green-800"
+                                  : claim.status === "Pending"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}
+                            >
+                              {claim.status}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {claim.amount}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setSelectedClaim(claim)}
+                              >
+                                <Eye className="w-5 h-5 text-gray-500" />
+                              </Button>
+                            </DialogTrigger>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </>
+                  )}
                 </TableBody>
               </Table>
             </div>
           )}
+
           {view === "new" && (
             <form onSubmit={handleSubmitClaim} className="space-y-8">
               <ClaimSection title="1. Claim Type Selection">
@@ -299,13 +467,19 @@ function ClaimsCenter() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="principal">
-                              Principal (Mark Larbi)
+                              Principal (
+                              {clientDetails?.first_name +
+                                " " +
+                                clientDetails?.last_name}
+                              )
                             </SelectItem>
                             <SelectItem value="secondary1">
-                              Secondary Life 1 (Kwame Appiah)
+                              Secondary Life 1 (
+                              {clientDetails?.dependent_one?.name})
                             </SelectItem>
                             <SelectItem value="secondary2">
-                              Secondary Life 2 (Maame Ama)
+                              Secondary Life 2 (
+                              {clientDetails?.dependent_two?.name})
                             </SelectItem>
                           </SelectContent>
                         </Select>
@@ -338,6 +512,8 @@ function ClaimsCenter() {
                       <InputWithIcon
                         icon={Users}
                         placeholder="Relationship to Insured (if not policyholder)"
+                        value={formDetails.relationship || ""}
+                        readOnly={!!claimant}
                       />
                     </div>
                   </ClaimSection>
@@ -349,14 +525,20 @@ function ClaimsCenter() {
                           icon={Calendar}
                           type="date"
                           placeholder="Date of Death"
+                          value={formDetails.claim_date || ""}
+                          onChange={handleInputChange("claim_date")}
                         />
                         <InputWithIcon
                           icon={Heart}
                           placeholder="Cause of Death"
+                          value={formDetails.cause_of_death || ""}
+                          onChange={handleInputChange("cause_of_death")}
                         />
                         <InputWithIcon
                           icon={MapPin}
                           placeholder="Place of Death (Hospital/Home/Accident, etc.)"
+                          value={formDetails.place_of_death || ""}
+                          onChange={handleInputChange("place_of_death")}
                         />
                       </div>
                       <div>
@@ -367,18 +549,81 @@ function ClaimsCenter() {
                           <DocumentUploader
                             id="doc_death_cert"
                             label="Certified Death Certificate"
+                            checked={
+                              !!formDetails.documents?.doc_death_cert?.required
+                            }
+                            fileName={
+                              formDetails.documents?.doc_death_cert?.file?.name
+                            }
+                            onCheckedChange={(checked) =>
+                              handleDocumentCheck("doc_death_cert", checked)
+                            }
+                            onFileChange={(file) =>
+                              handleDocumentFile("doc_death_cert", file)
+                            }
                           />
                           <DocumentUploader
                             id="doc_policyholder_id"
                             label="Policyholder’s ID/Proof of Relationship"
+                            checked={
+                              !!formDetails.documents?.doc_policyholder_id
+                                ?.required
+                            }
+                            fileName={
+                              formDetails.documents?.doc_policyholder_id?.file
+                                ?.name
+                            }
+                            onCheckedChange={(checked) =>
+                              handleDocumentCheck(
+                                "doc_policyholder_id",
+                                checked
+                              )
+                            }
+                            onFileChange={(file) =>
+                              handleDocumentFile("doc_policyholder_id", file)
+                            }
                           />
                           <DocumentUploader
                             id="doc_medical_report_death"
                             label="Medical Reports (if applicable)"
+                            checked={
+                              !!formDetails.documents?.doc_medical_report_death
+                                ?.required
+                            }
+                            fileName={
+                              formDetails.documents?.doc_medical_report_death
+                                ?.file?.name
+                            }
+                            onCheckedChange={(checked) =>
+                              handleDocumentCheck(
+                                "doc_medical_report_death",
+                                checked
+                              )
+                            }
+                            onFileChange={(file) =>
+                              handleDocumentFile(
+                                "doc_medical_report_death",
+                                file
+                              )
+                            }
                           />
                           <DocumentUploader
                             id="doc_police_report"
                             label="Police Report (if death was accidental)"
+                            checked={
+                              !!formDetails.documents?.doc_police_report
+                                ?.required
+                            }
+                            fileName={
+                              formDetails.documents?.doc_police_report?.file
+                                ?.name
+                            }
+                            onCheckedChange={(checked) =>
+                              handleDocumentCheck("doc_police_report", checked)
+                            }
+                            onFileChange={(file) =>
+                              handleDocumentFile("doc_police_report", file)
+                            }
                           />
                         </div>
                       </div>
@@ -479,14 +724,33 @@ function ClaimsCenter() {
 
                   <ClaimSection title="6. Declaration & Submission">
                     <div className="flex items-center space-x-2">
-                      <Checkbox id="declaration" />
+                      <Checkbox
+                        id="declaration"
+                        checked={!!formDetails.declaration}
+                        onCheckedChange={(checked) =>
+                          setFormDetails((prev) => ({
+                            ...prev,
+                            declaration: checked,
+                          }))
+                        }
+                      />
                       <Label htmlFor="declaration">
                         I confirm that the information provided is accurate.
                       </Label>
                     </div>
-                    <Button type="submit" className="w-full md:w-auto">
-                      Submit Claim <ChevronsRight className="w-4 h-4 ml-2" />
-                    </Button>
+                    {fileLoading ? (
+                      <Button type="submit" className="w-full md:w-auto">
+                        Submitting...
+                      </Button>
+                    ) : (
+                      <Button
+                        type="submit"
+                        className="w-full md:w-auto"
+                        disabled={!formDetails.declaration}
+                      >
+                        Submit Claim <ChevronsRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    )}
                   </ClaimSection>
                 </>
               )}
