@@ -188,7 +188,6 @@ function ClaimsCenter() {
 
     const getAllClaims = async () => {
       const response = await claimsApi.getAllClaims();
-      console.log("Response", response);
       setFetchedClaims(
         response?.data?.map((data) => ({
           id: data?.id || "N/A",
@@ -371,8 +370,6 @@ function ClaimsCenter() {
   const isDeathDocsComplete =
     formDetails?.documents?.doc_death_cert?.url &&
     formDetails?.documents?.doc_policyholder_id?.url;
-
-  console.log("Seelcted claim", selectedClaim);
 
   return (
     <Dialog>
