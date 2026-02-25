@@ -62,6 +62,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import claimsApi from "../../services/api/claims";
+import attachmentsApi from "../../services/api/attachments";
 
 const claimsHistory = [
   {
@@ -129,7 +130,7 @@ const DocumentUploader = ({
   return (
     <div className="flex items-center justify-between p-2 border rounded-md bg-gray-50/50">
       <div className="flex items-center space-x-2">
-        <Checkbox id={id} checked={checked} onCheckedChange={onCheckedChange} />
+        {/* <Checkbox id={id} checked={checked} onCheckedChange={onCheckedChange} /> */}
         <label htmlFor={id} className="text-sm font-medium leading-none">
           {label}
         </label>
@@ -242,8 +243,6 @@ function ClaimsCenter() {
     }
   };
 
-  console.log("Claimant", claimant)
-
   const handleClaimTypeChange = (value) => {
     setClaimType(value);
     setClaimant("");
@@ -260,11 +259,14 @@ function ClaimsCenter() {
     try {
       e.preventDefault();
       setFileLoading(true);
+      const user = JSON.parse(localStorage.getItem("clientDetails"));
+      const docs = formDetails?.documents || {};
 
       const finalValues = {
+        creator_id: user?.id,
         claim_type: formDetails?.claim_type,
         policy_holder_details: {
-          id: "",
+          id: user?.policy_holder_id,
           name: formDetails?.fullName,
           relationship: formDetails?.relationship,
           email: formDetails?.email,
@@ -272,14 +274,14 @@ function ClaimsCenter() {
           sex: "",
           dob: "",
         },
-        claim_date: "",
+        claim_date: formDetails.claim_date,
         is_declaration_submission_checked: formDetails?.declaration,
         cause_of_death: formDetails?.cause_of_death, //optional
         place_of_death: formDetails?.place_of_death, //optional
-        death_certificate: "", //optional
-        medical_reports: "", //optional
-        proof_of_relationship: "", //optional
-        police_report: "", //optional
+        death_certificate: docs?.doc_death_cert?.url || "",
+        medical_reports: docs?.doc_medical_report_death?.url || "",
+        proof_of_relationship: docs?.doc_policyholder_id?.url || "",
+        police_report: docs?.doc_police_report?.url || "",
       };
       const response = await claimsApi.fileNewClaim(finalValues);
       if (response?.code === "GS200") {
@@ -324,18 +326,52 @@ function ClaimsCenter() {
     }));
   };
 
-  const handleDocumentFile = (docId, file) => {
-    setFormDetails((prev) => ({
-      ...prev,
-      documents: {
-        ...prev.documents,
-        [docId]: {
-          ...prev.documents?.[docId],
-          file,
+  const handleDocumentFile = async (docId, file) => {
+    try {
+      setFileLoading(true);
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await attachmentsApi.uploadAttachment(formData);
+
+      // Assuming API returns: { url: "https://file-url.com/xyz.pdf" }
+      const fileUrl = response?.data?.path;
+
+      if (!fileUrl) {
+        throw new Error("Upload failed");
+      }
+
+      setFormDetails((prev) => ({
+        ...prev,
+        documents: {
+          ...prev.documents,
+          [docId]: {
+            ...prev.documents?.[docId],
+            file,
+            url: fileUrl, // store uploaded file URL
+          },
         },
-      },
-    }));
+      }));
+
+      toast({
+        title: "Upload successful",
+        description: `${file.name} uploaded successfully.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: "Could not upload file",
+        variant: "destructive",
+      });
+    } finally {
+      setFileLoading(false);
+    }
   };
+
+  const isDeathDocsComplete =
+    formDetails?.documents?.doc_death_cert?.url &&
+    formDetails?.documents?.doc_policyholder_id?.url;
 
   return (
     <Dialog>
@@ -746,7 +782,10 @@ function ClaimsCenter() {
                       <Button
                         type="submit"
                         className="w-full md:w-auto"
-                        disabled={!formDetails.declaration}
+                        disabled={
+                          !formDetails.declaration ||
+                          (claimType === "death" && !isDeathDocsComplete)
+                        }
                       >
                         Submit Claim <ChevronsRight className="w-4 h-4 ml-2" />
                       </Button>
