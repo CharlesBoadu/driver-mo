@@ -188,9 +188,10 @@ function ClaimsCenter() {
 
     const getAllClaims = async () => {
       const response = await claimsApi.getAllClaims();
+      console.log("Response", response);
       setFetchedClaims(
         response?.data?.map((data) => ({
-          id: data?.claim_id || "N/A",
+          id: data?.id || "N/A",
           date: data?.claim_date || "N/A",
           type: data?.claim_type || "N/A",
           status: data?.status || "N/A",
@@ -284,7 +285,7 @@ function ClaimsCenter() {
         police_report: docs?.doc_police_report?.url || "",
       };
       const response = await claimsApi.fileNewClaim(finalValues);
-      if (response?.code === "GS200") {
+      if (response?.code === "GS200" || response?.code === "GS201") {
         toast({
           title: "🚧 Claim Submitted!",
           description: "Your claim would be processed by our team shortly",
@@ -303,8 +304,6 @@ function ClaimsCenter() {
       setFileLoading(false);
     }
   };
-
-  console.log("Form Details", formDetails);
 
   const handleInputChange = (field) => (e) => {
     setFormDetails((prev) => ({
@@ -372,6 +371,8 @@ function ClaimsCenter() {
   const isDeathDocsComplete =
     formDetails?.documents?.doc_death_cert?.url &&
     formDetails?.documents?.doc_policyholder_id?.url;
+
+  console.log("Seelcted claim", selectedClaim);
 
   return (
     <Dialog>
@@ -807,7 +808,7 @@ function ClaimsCenter() {
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-4">
-            {selectedClaim.details.type === "Death" && (
+            {selectedClaim.details.type?.toLowerCase() === "death" && (
               <>
                 <p className="flex flex-row">
                   <strong className="flex flex-row w-[9vw]">
