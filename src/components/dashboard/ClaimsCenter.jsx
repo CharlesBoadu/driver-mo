@@ -36,6 +36,7 @@ import {
   Dot,
   Circle,
   LoaderIcon,
+  Download,
 } from "lucide-react";
 import {
   Table,
@@ -181,19 +182,25 @@ function ClaimsCenter() {
   const [fileLoading, setFileLoading] = useState(false);
   const [clientDetails, setClientDetails] = useState(null);
   const [fetchedClaims, setFetchedClaims] = useState([]);
+  const [claimDocuments, setClaimDocuments] = useState([]);
+  const [downloadLoading, setDownloadLoading] = useState(false);
+  const DOWNLOAD_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const clientData = JSON.parse(localStorage.getItem("clientDetails"));
     setClientDetails(clientData);
 
     const getAllClaims = async () => {
+      setLoading(true);
       const response = await claimsApi.getAllClaims();
+      setLoading(false);
       setFetchedClaims(
         response?.data?.map((data) => ({
-          id: data?.id || "N/A",
+          name: data?.policy_holder_details?.name || "N/A",
           date: data?.claim_date || "N/A",
           type: data?.claim_type || "N/A",
-          status: data?.status || "N/A",
+          status: data?.current_status || "N/A",
           amount: data?.amount || "N/A",
           details: {
             type: data?.claim_type || "N/A",
@@ -201,6 +208,10 @@ function ClaimsCenter() {
             dateOfDeath: data?.claim_date || "N/A",
             cause: data?.cause_of_death || "N/A",
           },
+          death_certificate: data?.death_certificate,
+          medical_reports: data?.medical_reports,
+          proof_of_relationship: data?.proof_of_relationship,
+          police_report: data?.police_report,
         })) || []
       );
     };
@@ -367,6 +378,68 @@ function ClaimsCenter() {
     }
   };
 
+  useEffect(() => {
+    const extractClaimDocuments = (selectedClaim) => {
+      const documentMap = [
+        { key: "death_certificate", label: "Death Certificate" },
+        { key: "medical_reports", label: "Medical Reports" },
+        { key: "proof_of_relationship", label: "Proof of Relationship" },
+        { key: "police_report", label: "Police Report" },
+      ];
+
+      return documentMap
+        .filter((doc) => selectedClaim?.[doc.key]) // only include existing ones
+        .map((doc, index) => ({
+          id: index + 1,
+          type: doc.label,
+          url: selectedClaim[doc.key],
+          key: doc.key,
+        }));
+    };
+
+    setClaimDocuments(extractClaimDocuments(selectedClaim));
+  }, [selectedClaim]);
+
+  const handleDownloadPdf = async (pathUrl) => {
+    setDownloadLoading(true);
+
+    try {
+      const response = await fetch(
+        `${DOWNLOAD_BASE_URL}/attachments/download`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            path: pathUrl,
+          }),
+        }
+      );
+      setDownloadLoading(false);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch PDF");
+      }
+
+      const blob = await response.blob();
+      const fileURL = URL.createObjectURL(blob);
+
+      // Open in new tab
+      window.open(fileURL, "_blank");
+
+      // Optional: revoke object URL later to free memory
+      setTimeout(() => URL.revokeObjectURL(fileURL), 10000);
+    } catch (error) {
+      toast({
+        title: "Error downloading document",
+        description: "File not found or could not download PDF",
+        variant: "destructive",
+      });
+      console.error("Error fetching PDF:", error);
+    }
+  };
+
   const isDeathDocsComplete =
     formDetails?.documents?.doc_death_cert?.url &&
     formDetails?.documents?.doc_policyholder_id?.url;
@@ -402,7 +475,7 @@ function ClaimsCenter() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>S/N</TableHead>
-                    <TableHead>Claim ID</TableHead>
+                    <TableHead>Claimant</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Status</TableHead>
@@ -411,54 +484,67 @@ function ClaimsCenter() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {!fetchedClaims || fetchedClaims.length === 0 ? (
+                  {loading ? (
                     <TableRow>
                       <TableCell
                         colSpan={7}
                         className="text-center py-6 text-gray-500"
                       >
-                        No Claims found
+                        loading claims...
                       </TableCell>
                     </TableRow>
                   ) : (
                     <>
-                      {fetchedClaims?.map((claim, index) => (
-                        <TableRow key={claim.id}>
-                          <TableCell>{index + 1}</TableCell>
-                          <TableCell className="font-medium">
-                            {claim.id}
-                          </TableCell>
-                          <TableCell>{claim.date}</TableCell>
-                          <TableCell>{claim.type}</TableCell>
-                          <TableCell>
-                            <span
-                              className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                                claim.status === "Approved"
-                                  ? "bg-green-100 text-green-800"
-                                  : claim.status === "Pending"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : "bg-red-100 text-red-800"
-                              }`}
-                            >
-                              {claim.status}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {claim.amount}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <DialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setSelectedClaim(claim)}
-                              >
-                                <Eye className="w-5 h-5 text-gray-500" />
-                              </Button>
-                            </DialogTrigger>
+                      {!fetchedClaims || fetchedClaims.length === 0 ? (
+                        <TableRow>
+                          <TableCell
+                            colSpan={7}
+                            className="text-center py-6 text-gray-500"
+                          >
+                            No Claims found
                           </TableCell>
                         </TableRow>
-                      ))}
+                      ) : (
+                        <>
+                          {fetchedClaims?.map((claim, index) => (
+                            <TableRow key={claim.id}>
+                              <TableCell>{index + 1}</TableCell>
+                              <TableCell className="font-medium">
+                                {claim.name}
+                              </TableCell>
+                              <TableCell>{claim.date?.split("T")[0]}</TableCell>
+                              <TableCell>{claim.type}</TableCell>
+                              <TableCell>
+                                <span
+                                  className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                    claim.status.toLowerCase() === "Approved"
+                                      ? "bg-green-100 text-green-800"
+                                      : claim.status.toLowerCase() === "filed"
+                                      ? "bg-yellow-100 text-yellow-800"
+                                      : "bg-red-100 text-red-800"
+                                  }`}
+                                >
+                                  {claim.status.toLowerCase()}
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {claim.amount}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <DialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => setSelectedClaim(claim)}
+                                  >
+                                    <Eye className="w-5 h-5 text-gray-500" />
+                                  </Button>
+                                </DialogTrigger>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </>
+                      )}
                     </>
                   )}
                 </TableBody>
@@ -798,31 +884,31 @@ function ClaimsCenter() {
       {selectedClaim && (
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Claim Details: {selectedClaim.id}</DialogTitle>
+            <DialogTitle>Claim Details for: {selectedClaim.name}</DialogTitle>
             <DialogDescription>
               Viewing details for a {selectedClaim.type} claim submitted on{" "}
-              {selectedClaim.date}.
+              {selectedClaim.date.split("T")[0]}.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4 space-y-4">
+          <div className="py-4 space-y-4 h-[80vh] overflow-auto">
             {selectedClaim.details.type?.toLowerCase() === "death" && (
               <>
                 <p className="flex flex-row">
-                  <strong className="flex flex-row w-[9vw]">
+                  <strong className="flex flex-row w-[12vw]">
                     <User />
                     Claimant:
                   </strong>{" "}
                   {selectedClaim.details.name}
                 </p>
                 <p className="flex flex-row">
-                  <strong className="flex flex-row w-[9vw]">
+                  <strong className="flex flex-row w-[12vw]">
                     <Calendar />
                     Date of Death:
                   </strong>{" "}
-                  {selectedClaim.details.dateOfDeath}
+                  {selectedClaim.details.dateOfDeath.split("T")[0]}
                 </p>
                 <p className="flex flex-row">
-                  <strong className="flex flex-row w-[9vw]">
+                  <strong className="flex flex-row w-[12vw]">
                     <StickyNote />
                     Cause of Death:
                   </strong>{" "}
@@ -833,28 +919,28 @@ function ClaimsCenter() {
             {selectedClaim.details.type === "Hospitalization" && (
               <>
                 <p className="flex flex-row">
-                  <strong className="flex flex-row w-[9vw]">
+                  <strong className="flex flex-row w-[12vw]">
                     <User />
                     Patient:
                   </strong>{" "}
                   {selectedClaim.details.name}
                 </p>
                 <p className="flex flex-row">
-                  <strong className="flex flex-row w-[9vw]">
+                  <strong className="flex flex-row w-[12vw]">
                     <Calendar />
                     Admission Date:
                   </strong>{" "}
                   {selectedClaim.details.admissionDate}
                 </p>
                 <p className="flex flex-row">
-                  <strong className="flex flex-row w-[9vw]">
+                  <strong className="flex flex-row w-[12vw]">
                     <Calendar />
                     Discharge Date:
                   </strong>{" "}
                   {selectedClaim.details.dischargeDate}
                 </p>
                 <p className="flex flex-row">
-                  <strong className="flex flex-row w-[9vw]">
+                  <strong className="flex flex-row w-[12vw]">
                     <StickyNote />
                     Diagnosis:
                   </strong>{" "}
@@ -863,19 +949,76 @@ function ClaimsCenter() {
               </>
             )}
             <p className="flex flex-row">
-              <strong className="flex flex-row w-[9vw]">
+              <strong className="flex flex-row w-[12vw]">
                 <Circle />
                 Status:
               </strong>{" "}
-              {selectedClaim.status}
+              <span
+                className={`px-2 py-1 text-xs font-semibold rounded-full
+              ${
+                selectedClaim.status.toLowerCase() === "Approved"
+                  ? "bg-green-100 text-green-800"
+                  : selectedClaim.status.toLowerCase() === "filed"
+                  ? "bg-yellow-100 text-yellow-800"
+                  : "bg-red-100 text-red-800"
+              }`}
+              >
+                {selectedClaim.status}
+              </span>
             </p>
             <p className="flex flex-row">
-              <strong className="flex flex-row w-[9vw]">
+              <strong className="flex flex-row w-[12vw]">
                 <Banknote />
                 Amount:
               </strong>{" "}
               GHS {selectedClaim.amount}
             </p>
+            {/* Claim Documents */}
+            <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
+              <table className="min-w-full divide-y divide-gray-200 bg-white text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">
+                      SN
+                    </th>
+                    <th className="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">
+                      Document Type
+                    </th>
+                    <th className="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y divide-gray-100">
+                  {claimDocuments.map((data, index) => {
+                    return (
+                      <tr
+                        key={data.key}
+                        className="hover:bg-gray-50 transition-colors duration-150"
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap text-gray-700 font-medium">
+                          {index + 1}
+                        </td>
+
+                        <td className="px-6 py-4 text-gray-700">{data.type}</td>
+
+                        <td className="px-6 py-4">
+                          <div className="flex items-center space-x-3">
+                            <button
+                              onClick={() => handleDownloadPdf(data?.url)}
+                              className="p-2 rounded-lg hover:bg-red-50 hover:text-red-600 text-gray-500 transition"
+                            >
+                              <Download className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </DialogContent>
       )}
