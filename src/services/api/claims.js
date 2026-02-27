@@ -10,6 +10,16 @@ const getAllClaims = async () => {
   }
 };
 
+const getAllClaimsByCreator = async (creatorID) => {
+  let url = `/claims/by-creator-id/${creatorID}`;
+  try {
+    const response = await API_URL.get(url);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
 const fileNewClaim = async (data) => {
   let url = `/claims/file-new`;
   try {
@@ -23,4 +33,5 @@ const fileNewClaim = async (data) => {
 export default {
   getAllClaims,
   fileNewClaim,
+  getAllClaimsByCreator
 };
