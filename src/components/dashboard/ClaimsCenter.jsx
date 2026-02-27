@@ -193,7 +193,7 @@ function ClaimsCenter() {
 
     const getAllClaims = async () => {
       setLoading(true);
-      const response = await claimsApi.getAllClaims();
+      const response = await claimsApi.getAllClaimsByCreator(clientData?.id || "");
       setLoading(false);
       setFetchedClaims(
         response?.data?.map((data) => ({
