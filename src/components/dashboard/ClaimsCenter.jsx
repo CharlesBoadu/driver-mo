@@ -193,7 +193,9 @@ function ClaimsCenter() {
 
     const getAllClaims = async () => {
       setLoading(true);
-      const response = await claimsApi.getAllClaimsByCreator(clientData?.id || "");
+      const response = await claimsApi.getAllClaimsByCreator(
+        clientData?.id || ""
+      );
       setLoading(false);
       setFetchedClaims(
         response?.data?.map((data) => ({
@@ -225,24 +227,29 @@ function ClaimsCenter() {
       email: clientDetails?.email,
       contact: clientDetails?.msisdn,
       relationship: "policyholder",
+      carNumber: clientDetails?.product?.item_id
     },
     secondary1: {
       name: clientDetails?.dependent_one?.name,
       email: clientDetails?.dependent_one?.email,
       contact: clientDetails?.dependent_one?.msisdn,
       relationship: clientDetails?.dependent_one?.relationship,
+      carNumber: clientDetails?.product?.item_id
     },
     secondary2: {
       name: clientDetails?.dependent_two?.name,
       email: clientDetails?.dependent_two?.email,
       contact: clientDetails?.dependent_two?.msisdn,
       relationship: clientDetails?.dependent_two?.relationship,
+      carNumber: clientDetails?.product?.item_id
     },
   };
 
   const handleClaimantChange = (value) => {
     setClaimant(value);
+    
     const data = getPolicyData[value];
+    console.log("Data", data);
     if (data) {
       setFormDetails((prev) => ({
         ...prev,
@@ -250,6 +257,7 @@ function ClaimsCenter() {
         contactNumber: data.contact,
         email: data.email,
         relationship: data.relationship,
+        carNumber: data?.carNumber
       }));
     }
   };
@@ -577,13 +585,19 @@ function ClaimsCenter() {
                 <>
                   <ClaimSection title="2. Claimant & Policyholder Details">
                     <div className="grid md:grid-cols-2 gap-4">
+                      <InputWithIcon
+                        icon={User}
+                        placeholder="Claimant"
+                        value={formDetails.claimant || ""}
+                        // readOnly={!!claimant}
+                      />
                       {claimType === "death" && (
                         <Select
                           onValueChange={handleClaimantChange}
                           value={claimant}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Select Insured Life..." />
+                            <SelectValue placeholder="Select Deaceased..." />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="principal">
@@ -604,6 +618,7 @@ function ClaimsCenter() {
                           </SelectContent>
                         </Select>
                       )}
+
                       <InputWithIcon
                         icon={User}
                         placeholder="Full Name"
@@ -612,8 +627,8 @@ function ClaimsCenter() {
                       />
                       <InputWithIcon
                         icon={Hash}
-                        placeholder="Policy Number"
-                        value="AUTO-INS-2025-07-29"
+                        placeholder="Car Number"
+                        value={formDetails?.carNumber || "AUTO-INS-2025-07-29"}
                         disabled
                       />
                       <InputWithIcon
@@ -634,6 +649,12 @@ function ClaimsCenter() {
                         placeholder="Relationship to Insured (if not policyholder)"
                         value={formDetails.relationship || ""}
                         readOnly={!!claimant}
+                      />
+                      <InputWithIcon
+                        icon={Phone}
+                        placeholder="Contact Person"
+                        value={formDetails.contactPerson || ""}
+                        // readOnly={!!claimant}
                       />
                     </div>
                   </ClaimSection>
