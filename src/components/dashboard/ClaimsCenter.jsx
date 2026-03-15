@@ -39,6 +39,7 @@ import {
   Download,
   Info,
   AlertCircle,
+  LocateIcon,
 } from "lucide-react";
 import {
   Table,
@@ -207,16 +208,19 @@ function ClaimsCenter() {
           status: data?.current_status?.status || "N/A",
           amount: data?.initial_amount || "N/A",
           claimant: data?.claimant || "N/A",
+          relationship: data?.policy_holder_details?.relationship || "N/A",
           details: {
             type: data?.claim_type || "N/A",
             name: data?.policy_holder_details?.name || "N/A",
             dateOfDeath: data?.claim_date || "N/A",
             cause: data?.cause_of_death || "N/A",
+            place: data?.place_of_death || "N/A"
           },
           death_certificate: data?.death_certificate,
           medical_reports: data?.medical_reports,
           proof_of_relationship: data?.proof_of_relationship,
           police_report: data?.police_report,
+          created_at: data?.created_at,
         })) || []
       );
     };
@@ -534,7 +538,7 @@ function ClaimsCenter() {
                             <TableRow key={claim.id}>
                               <TableCell>{index + 1}</TableCell>
                               <TableCell className="font-medium">
-                                {claim.name}
+                                {claim.claimant}
                               </TableCell>
                               <TableCell>{claim.date?.split("T")[0]}</TableCell>
                               <TableCell>{claim.type}</TableCell>
@@ -983,12 +987,19 @@ function ClaimsCenter() {
             <DialogTitle>Claim Details for: {selectedClaim.name}</DialogTitle>
             <DialogDescription>
               Viewing details for a {selectedClaim.type} claim submitted on{" "}
-              {selectedClaim.date.split("T")[0]}.
+              {selectedClaim.created_at.split("T")[0]}.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4 space-y-4 h-[80vh] overflow-auto">
+          <div className="py-4 space-y-4 md:h-[80vh] 2xl:h-fit overflow-auto">
             {selectedClaim.details.type?.toLowerCase() === "death" && (
-              <>
+              <div className="grid grid-cols-2 gap-5">
+                <p className="flex flex-row">
+                  <strong className="flex flex-row w-[12vw]">
+                    <User />
+                    Claim Type:
+                  </strong>{" "}
+                  {selectedClaim.type}
+                </p>
                 <p className="flex flex-row">
                   <strong className="flex flex-row w-[12vw]">
                     <User />
@@ -1005,6 +1016,13 @@ function ClaimsCenter() {
                 </p>
                 <p className="flex flex-row">
                   <strong className="flex flex-row w-[12vw]">
+                    <User />
+                    Relationship:
+                  </strong>{" "}
+                  {selectedClaim.relationship || "N/A"}
+                </p>
+                <p className="flex flex-row">
+                  <strong className="flex flex-row w-[12vw]">
                     <Calendar />
                     Incident Date:
                   </strong>{" "}
@@ -1017,7 +1035,14 @@ function ClaimsCenter() {
                   </strong>{" "}
                   {selectedClaim.details.cause}
                 </p>
-              </>
+                <p className="flex flex-row">
+                  <strong className="flex flex-row w-[12vw]">
+                    <LocateIcon />
+                    Place of Death:
+                  </strong>{" "}
+                  {selectedClaim.details.place}
+                </p>
+              </div>
             )}
             {selectedClaim.details.type === "Hospitalization" && (
               <>
