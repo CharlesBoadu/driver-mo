@@ -982,7 +982,7 @@ function ClaimsCenter() {
         </CardContent>
       </Card>
       {selectedClaim && (
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>Claim Details for: {selectedClaim.name}</DialogTitle>
             <DialogDescription>
@@ -990,7 +990,7 @@ function ClaimsCenter() {
               {selectedClaim.created_at.split("T")[0]}.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4 space-y-4 md:h-[80vh] 2xl:h-fit overflow-auto">
+          <div className="py-4 space-y-4  overflow-auto">
             {selectedClaim.details.type?.toLowerCase() === "death" && (
               <div className="grid grid-cols-2 gap-5">
                 <p className="flex flex-row">
@@ -1076,6 +1076,7 @@ function ClaimsCenter() {
                 </p>
               </>
             )}
+            <div className="grid grid-cols-2 gap-5">
             <p className="flex flex-row">
               <strong className="flex flex-row w-[12vw]">
                 <Circle />
@@ -1102,6 +1103,8 @@ function ClaimsCenter() {
               </strong>{" "}
               GHS {selectedClaim.amount || "0"}
             </p>
+
+            </div>
             {/* Claim Documents */}
             <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
               <table className="min-w-full divide-y divide-gray-200 bg-white text-sm">
