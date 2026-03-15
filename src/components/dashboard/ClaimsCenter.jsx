@@ -304,6 +304,7 @@ function ClaimsCenter() {
         police_report: docs?.doc_police_report?.url || "",
       };
       const response = await claimsApi.fileNewClaim(finalValues);
+      
       if (response?.code === "GS200" || response?.code === "GS201") {
         toast({
           title: "🚧 Claim Submitted!",
@@ -659,7 +660,7 @@ function ClaimsCenter() {
                         icon={Phone}
                         placeholder="Contact Person"
                         value={formDetails.contactPerson || ""}
-                        // readOnly={!!claimant}
+                        onChange={handleInputChange("contact_person")}
                       />
                     </div>
                   </ClaimSection>
