@@ -453,7 +453,8 @@ function ClaimsCenter() {
     formDetails?.documents?.doc_death_cert?.url &&
     formDetails?.documents?.doc_policyholder_id?.url;
 
-    console.log("Selected claim", selectedClaim);
+  // console.log("Selected claim", selectedClaim);
+  console.log("Form Details", formDetails)
   return (
     <Dialog>
       <Card>
@@ -593,7 +594,7 @@ function ClaimsCenter() {
                         icon={User}
                         placeholder="Claimant"
                         value={formDetails.claimant || ""}
-                        // readOnly={!!claimant}
+                        onChange={handleInputChange("claimant")}
                       />
                       {claimType === "death" && (
                         <Select
