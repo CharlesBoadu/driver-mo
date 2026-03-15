@@ -202,10 +202,10 @@ function ClaimsCenter() {
       setFetchedClaims(
         response?.data?.map((data) => ({
           name: data?.policy_holder_details?.name || "N/A",
-          date: data?.claim_date || "N/A",
+          date: data?.incident_date || "N/A",
           type: data?.claim_type || "N/A",
-          status: data?.current_status || "N/A",
-          amount: data?.amount || "N/A",
+          status: data?.current_status?.status || "N/A",
+          amount: data?.initial_amount || "N/A",
           claimant: data?.claimant || "N/A",
           details: {
             type: data?.claim_type || "N/A",
@@ -500,7 +500,7 @@ function ClaimsCenter() {
                   <TableRow>
                     <TableHead>S/N</TableHead>
                     <TableHead>Claimant</TableHead>
-                    <TableHead>Date</TableHead>
+                    <TableHead>Incident Date</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Amount (GHS)</TableHead>
@@ -541,20 +541,18 @@ function ClaimsCenter() {
                               <TableCell>
                                 <span
                                   className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                                    claim?.current_status?.toLowerCase() ===
-                                    "Approved"
+                                    claim?.status?.toLowerCase() === "Approved"
                                       ? "bg-green-100 text-green-800"
-                                      : claim?.current_status?.toLowerCase() ===
-                                        "filed"
+                                      : claim?.status?.toLowerCase() === "filed"
                                       ? "bg-yellow-100 text-yellow-800"
                                       : "bg-red-100 text-red-800"
                                   }`}
                                 >
-                                  {claim?.current_status?.toLowerCase() || "-"}
+                                  {claim?.status?.toLowerCase() || "-"}
                                 </span>
                               </TableCell>
                               <TableCell className="text-right">
-                                {claim.initial_amount || "0"}
+                                {claim.amount || "0"}
                               </TableCell>
                               <TableCell className="text-center">
                                 <DialogTrigger asChild>
@@ -948,7 +946,7 @@ function ClaimsCenter() {
                       className="flex flex-row space-x-2"
                       htmlFor="caution"
                     >
-                      <AlertCircle color="red"/>
+                      <AlertCircle color="red" />
                       <span className="my-auto">
                         Please note that submitting false information is
                         fraudulent and punishable by law.
@@ -1008,9 +1006,9 @@ function ClaimsCenter() {
                 <p className="flex flex-row">
                   <strong className="flex flex-row w-[12vw]">
                     <Calendar />
-                    Date of Death:
+                    Incident Date:
                   </strong>{" "}
-                  {selectedClaim.details.dateOfDeath.split("T")[0]}
+                  {selectedClaim.date.split("T")[0]}
                 </p>
                 <p className="flex flex-row">
                   <strong className="flex flex-row w-[12vw]">
@@ -1061,15 +1059,15 @@ function ClaimsCenter() {
               <span
                 className={`px-2 py-1 text-xs font-semibold rounded-full
               ${
-                selectedClaim?.current_status?.toLowerCase() === "approved" ||
-                selectedClaim?.current_status?.toLowerCase() === "verified"
+                selectedClaim?.status?.toLowerCase() === "approved" ||
+                selectedClaim?.status?.toLowerCase() === "verified"
                   ? "bg-green-100 text-green-800"
-                  : selectedClaim?.current_status?.toLowerCase() === "filed"
+                  : selectedClaim?.status?.toLowerCase() === "filed"
                   ? "bg-yellow-100 text-yellow-800"
                   : "bg-red-100 text-red-800"
               }`}
               >
-                {selectedClaim?.current_status || "-"}
+                {selectedClaim?.status || "-"}
               </span>
             </p>
             <p className="flex flex-row">
@@ -1077,7 +1075,7 @@ function ClaimsCenter() {
                 <Banknote />
                 Amount:
               </strong>{" "}
-              GHS {selectedClaim.initial_amount || "0"}
+              GHS {selectedClaim.amount || "0"}
             </p>
             {/* Claim Documents */}
             <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
