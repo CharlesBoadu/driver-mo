@@ -37,6 +37,8 @@ import {
   Circle,
   LoaderIcon,
   Download,
+  Info,
+  AlertCircle,
 } from "lucide-react";
 import {
   Table,
@@ -302,6 +304,8 @@ function ClaimsCenter() {
         medical_reports: docs?.doc_medical_report_death?.url || "",
         proof_of_relationship: docs?.doc_policyholder_id?.url || "",
         police_report: docs?.doc_police_report?.url || "",
+        incident_date: formDetails?.incident_date,
+        contact_person_number: formDetails?.contact_person_number,
       };
       const response = await claimsApi.fileNewClaim(finalValues);
 
@@ -922,10 +926,19 @@ function ClaimsCenter() {
                       />
                       <Label htmlFor="declaration">
                         I confirm that the information provided is accurate.
-                        Please note that submitting false information is
-                        fraudulent and punishable by law.
                       </Label>
                     </div>
+                    <Label
+                      className="flex flex-row space-x-2"
+                      htmlFor="caution"
+                    >
+                      <AlertCircle color="red"/>
+                      <span className="my-auto">
+                        Please note that submitting false information is
+                        fraudulent and punishable by law.
+                      </span>
+                    </Label>
+                    <br />
                     {fileLoading ? (
                       <Button type="submit" className="w-full md:w-auto">
                         Submitting...
@@ -935,8 +948,9 @@ function ClaimsCenter() {
                         type="submit"
                         className="w-full md:w-auto"
                         disabled={
-                          !formDetails.declaration ||
-                          (claimType === "death" && !isDeathDocsComplete)
+                          !formDetails.declaration
+                          // ||
+                          // (claimType === "death" && !isDeathDocsComplete)
                         }
                       >
                         Submit Claim <ChevronsRight className="w-4 h-4 ml-2" />
