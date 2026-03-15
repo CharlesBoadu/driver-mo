@@ -204,6 +204,7 @@ function ClaimsCenter() {
           type: data?.claim_type || "N/A",
           status: data?.current_status || "N/A",
           amount: data?.amount || "N/A",
+          claimant: data?.claimant || "N/A",
           details: {
             type: data?.claim_type || "N/A",
             name: data?.policy_holder_details?.name || "N/A",
@@ -249,7 +250,7 @@ function ClaimsCenter() {
     setClaimant(value);
 
     const data = getPolicyData[value];
-    console.log("Data", data);
+    // console.log("Data", data);
     if (data) {
       setFormDetails((prev) => ({
         ...prev,
@@ -452,6 +453,7 @@ function ClaimsCenter() {
     formDetails?.documents?.doc_death_cert?.url &&
     formDetails?.documents?.doc_policyholder_id?.url;
 
+    console.log("Selected claim", selectedClaim);
   return (
     <Dialog>
       <Card>
@@ -919,9 +921,16 @@ function ClaimsCenter() {
                 <p className="flex flex-row">
                   <strong className="flex flex-row w-[12vw]">
                     <User />
-                    Claimant:
+                    Deceased:
                   </strong>{" "}
                   {selectedClaim.details.name}
+                </p>
+                <p className="flex flex-row">
+                  <strong className="flex flex-row w-[12vw]">
+                    <User />
+                    Claimant:
+                  </strong>{" "}
+                  {selectedClaim.claimant || "N/A"}
                 </p>
                 <p className="flex flex-row">
                   <strong className="flex flex-row w-[12vw]">
