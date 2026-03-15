@@ -893,6 +893,8 @@ function ClaimsCenter() {
                       />
                       <Label htmlFor="declaration">
                         I confirm that the information provided is accurate.
+                        Please note that submitting false information is fraudulent and
+                        punishable by law.
                       </Label>
                     </div>
                     {fileLoading ? (
