@@ -454,8 +454,16 @@ function ClaimsCenter() {
     formDetails?.documents?.doc_death_cert?.url &&
     formDetails?.documents?.doc_policyholder_id?.url;
 
+  const isHospitalizationDocsComplete =
+    formDetails?.documents?.doc_death_cert?.url &&
+    formDetails?.documents?.doc_policyholder_id?.url;
+
+  const isTpdDocsComplete =
+    formDetails?.documents?.doc_death_cert?.url &&
+    formDetails?.documents?.doc_policyholder_id?.url;
+
   // console.log("Selected claim", selectedClaim);
-  console.log("Form Details", formDetails);
+  // console.log("Form Details", formDetails);
   return (
     <Dialog>
       <Card>
@@ -833,29 +841,50 @@ function ClaimsCenter() {
                   {claimType === "hospitalization" && (
                     <ClaimSection title="5. Hospitalization Benefit Claim Section">
                       <div className="grid md:grid-cols-2 gap-4">
-                        <InputWithIcon
-                          icon={Calendar}
-                          type="date"
-                          placeholder="Admission Date"
-                        />
-                        <InputWithIcon
-                          icon={Calendar}
-                          type="date"
-                          placeholder="Discharge Date"
-                        />
-                        <InputWithIcon
-                          icon={ShieldCheck}
-                          placeholder="Diagnosis"
-                        />
-                        <InputWithIcon
-                          icon={Building}
-                          placeholder="Hospital Name"
-                        />
-                        <InputWithIcon
-                          icon={HandCoins}
-                          type="number"
-                          placeholder="Total Bill Amount"
-                        />
+                        <div>
+                          <label htmlFor="admissionDate">Admission Date</label>
+                          <InputWithIcon
+                            icon={Calendar}
+                            type="date"
+                            placeholder="Admission Date"
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="dischargeDate">Discharge Date</label>
+
+                          <InputWithIcon
+                            icon={Calendar}
+                            type="date"
+                            placeholder="Discharge Date"
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="diagnosis">Diagnosis</label>
+
+                          <InputWithIcon
+                            icon={ShieldCheck}
+                            placeholder="Diagnosis"
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="hospitalName">Hospital Name</label>
+
+                          <InputWithIcon
+                            icon={Building}
+                            placeholder="Hospital Name"
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="totalBillAmount">
+                            Total Bill Amount
+                          </label>
+
+                          <InputWithIcon
+                            icon={HandCoins}
+                            type="number"
+                            placeholder="Total Bill Amount"
+                          />
+                        </div>
                       </div>
                       <div>
                         <h4 className="font-medium mb-2 mt-4">
@@ -893,8 +922,8 @@ function ClaimsCenter() {
                       />
                       <Label htmlFor="declaration">
                         I confirm that the information provided is accurate.
-                        Please note that submitting false information is fraudulent and
-                        punishable by law.
+                        Please note that submitting false information is
+                        fraudulent and punishable by law.
                       </Label>
                     </div>
                     {fileLoading ? (
