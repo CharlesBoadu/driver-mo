@@ -794,6 +794,22 @@ function ClaimsCenter() {
                               handleDocumentFile("doc_police_report", file)
                             }
                           />
+                          <DocumentUploader
+                            id="other_document"
+                            label="Any Other Document"
+                            checked={
+                              !!formDetails.documents?.other_document?.required
+                            }
+                            fileName={
+                              formDetails.documents?.other_document?.file?.name
+                            }
+                            onCheckedChange={(checked) =>
+                              handleDocumentCheck("other_document", checked)
+                            }
+                            onFileChange={(file) =>
+                              handleDocumentFile("other_document", file)
+                            }
+                          />
                         </div>
                       </div>
                     </ClaimSection>
