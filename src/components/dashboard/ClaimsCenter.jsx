@@ -227,27 +227,27 @@ function ClaimsCenter() {
       email: clientDetails?.email,
       contact: clientDetails?.msisdn,
       relationship: "policyholder",
-      carNumber: clientDetails?.product?.item_id
+      carNumber: clientDetails?.product?.item_id,
     },
     secondary1: {
       name: clientDetails?.dependent_one?.name,
       email: clientDetails?.dependent_one?.email,
       contact: clientDetails?.dependent_one?.msisdn,
       relationship: clientDetails?.dependent_one?.relationship,
-      carNumber: clientDetails?.product?.item_id
+      carNumber: clientDetails?.product?.item_id,
     },
     secondary2: {
       name: clientDetails?.dependent_two?.name,
       email: clientDetails?.dependent_two?.email,
       contact: clientDetails?.dependent_two?.msisdn,
       relationship: clientDetails?.dependent_two?.relationship,
-      carNumber: clientDetails?.product?.item_id
+      carNumber: clientDetails?.product?.item_id,
     },
   };
 
   const handleClaimantChange = (value) => {
     setClaimant(value);
-    
+
     const data = getPolicyData[value];
     console.log("Data", data);
     if (data) {
@@ -257,7 +257,7 @@ function ClaimsCenter() {
         contactNumber: data.contact,
         email: data.email,
         relationship: data.relationship,
-        carNumber: data?.carNumber
+        carNumber: data?.carNumber,
       }));
     }
   };
@@ -525,18 +525,20 @@ function ClaimsCenter() {
                               <TableCell>
                                 <span
                                   className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                                    claim.status.toLowerCase() === "Approved"
+                                    claim?.current_status?.toLowerCase() ===
+                                    "Approved"
                                       ? "bg-green-100 text-green-800"
-                                      : claim.status.toLowerCase() === "filed"
+                                      : claim?.current_status?.toLowerCase() ===
+                                        "filed"
                                       ? "bg-yellow-100 text-yellow-800"
                                       : "bg-red-100 text-red-800"
                                   }`}
                                 >
-                                  {claim.status.toLowerCase()}
+                                  {claim?.current_status?.toLowerCase() || "-"}
                                 </span>
                               </TableCell>
                               <TableCell className="text-right">
-                                {claim.amount}
+                                {claim.initial_amount || "0"}
                               </TableCell>
                               <TableCell className="text-center">
                                 <DialogTrigger asChild>
@@ -977,14 +979,15 @@ function ClaimsCenter() {
               <span
                 className={`px-2 py-1 text-xs font-semibold rounded-full
               ${
-                selectedClaim.status.toLowerCase() === "Approved"
+                selectedClaim?.current_status?.toLowerCase() === "approved" ||
+                selectedClaim?.current_status?.toLowerCase() === "verified"
                   ? "bg-green-100 text-green-800"
-                  : selectedClaim.status.toLowerCase() === "filed"
+                  : selectedClaim?.current_status?.toLowerCase() === "filed"
                   ? "bg-yellow-100 text-yellow-800"
                   : "bg-red-100 text-red-800"
               }`}
               >
-                {selectedClaim.status}
+                {selectedClaim?.current_status || "-"}
               </span>
             </p>
             <p className="flex flex-row">
@@ -992,7 +995,7 @@ function ClaimsCenter() {
                 <Banknote />
                 Amount:
               </strong>{" "}
-              GHS {selectedClaim.amount}
+              GHS {selectedClaim.initial_amount || "0"}
             </p>
             {/* Claim Documents */}
             <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
