@@ -304,7 +304,7 @@ function ClaimsCenter() {
         police_report: docs?.doc_police_report?.url || "",
       };
       const response = await claimsApi.fileNewClaim(finalValues);
-      
+
       if (response?.code === "GS200" || response?.code === "GS201") {
         toast({
           title: "🚧 Claim Submitted!",
@@ -455,7 +455,7 @@ function ClaimsCenter() {
     formDetails?.documents?.doc_policyholder_id?.url;
 
   // console.log("Selected claim", selectedClaim);
-  console.log("Form Details", formDetails)
+  console.log("Form Details", formDetails);
   return (
     <Dialog>
       <Card>
@@ -658,9 +658,9 @@ function ClaimsCenter() {
                       />
                       <InputWithIcon
                         icon={Phone}
-                        placeholder="Contact Person"
-                        value={formDetails.contactPerson || ""}
-                        onChange={handleInputChange("contact_person")}
+                        placeholder="Contact Person's Number"
+                        value={formDetails.contact_person_number || ""}
+                        onChange={handleInputChange("contact_person_number")}
                       />
                     </div>
                   </ClaimSection>
@@ -668,25 +668,35 @@ function ClaimsCenter() {
                   {claimType === "death" && (
                     <ClaimSection title="3. Death Benefit Claim Section">
                       <div className="grid md:grid-cols-2 gap-4">
-                        <InputWithIcon
-                          icon={Calendar}
-                          type="date"
-                          placeholder="Date of Death"
-                          value={formDetails.claim_date || ""}
-                          onChange={handleInputChange("claim_date")}
-                        />
-                        <InputWithIcon
-                          icon={Heart}
-                          placeholder="Cause of Death"
-                          value={formDetails.cause_of_death || ""}
-                          onChange={handleInputChange("cause_of_death")}
-                        />
-                        <InputWithIcon
-                          icon={MapPin}
-                          placeholder="Place of Death (Hospital/Home/Accident, etc.)"
-                          value={formDetails.place_of_death || ""}
-                          onChange={handleInputChange("place_of_death")}
-                        />
+                        <div>
+                          <label htmlFor="incidentDate">Incident Date</label>
+                          <InputWithIcon
+                            icon={Calendar}
+                            type="date"
+                            placeholder="Date of Death"
+                            value={formDetails.incident_date || ""}
+                            onChange={handleInputChange("incident_date")}
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="causeOfDeath">Cause of Death</label>
+                          <InputWithIcon
+                            icon={Heart}
+                            placeholder="Cause of Death"
+                            value={formDetails.cause_of_death || ""}
+                            onChange={handleInputChange("cause_of_death")}
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="placeOfDeath">Place of Death</label>
+
+                          <InputWithIcon
+                            icon={MapPin}
+                            placeholder="Place of Death (Hospital/Home/Accident, etc.)"
+                            value={formDetails.place_of_death || ""}
+                            onChange={handleInputChange("place_of_death")}
+                          />
+                        </div>
                       </div>
                       <div>
                         <h4 className="font-medium mb-2 mt-4">
