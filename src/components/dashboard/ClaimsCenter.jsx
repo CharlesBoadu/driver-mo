@@ -301,6 +301,7 @@ function ClaimsCenter() {
           dob: "",
         },
         claim_date: formDetails.claim_date,
+        claimant: formDetails?.claimant,
         is_declaration_submission_checked: formDetails?.declaration,
         cause_of_death: formDetails?.cause_of_death, //optional
         place_of_death: formDetails?.place_of_death, //optional
