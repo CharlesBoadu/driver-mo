@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
+import policyAndPlanApi from "../../services/api/policyAndPlanApi";
 import {
   Upload,
   PlusCircle,
@@ -189,6 +190,7 @@ function ClaimsCenter() {
   const [downloadLoading, setDownloadLoading] = useState(false);
   const DOWNLOAD_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [loading, setLoading] = useState(false);
+  const [claimTypes, setClaimTypes] = useState([]);
 
   useEffect(() => {
     const clientData = JSON.parse(localStorage.getItem("clientDetails"));
@@ -214,7 +216,7 @@ function ClaimsCenter() {
             name: data?.policy_holder_details?.name || "N/A",
             dateOfDeath: data?.claim_date || "N/A",
             cause: data?.cause_of_death || "N/A",
-            place: data?.place_of_death || "N/A"
+            place: data?.place_of_death || "N/A",
           },
           death_certificate: data?.death_certificate,
           medical_reports: data?.medical_reports,
@@ -225,7 +227,38 @@ function ClaimsCenter() {
       );
     };
 
+    const fetchPlans = async () => {
+      const response = await policyAndPlanApi.fetchAllPlans();
+
+      const selectedPlan = response.data.find(
+        (plan) =>
+          plan.plan_details.plan_name.toLowerCase() ===
+          clientData?.plan_type?.toLowerCase()
+      );
+
+      const types = [];
+
+      if (selectedPlan?.main_live_benefit?.death_live_cover_included) {
+        types.push("death");
+      }
+
+      if (
+        selectedPlan?.main_live_benefit?.total_permanent_disability_included
+      ) {
+        types.push("tpd");
+      }
+
+      if (
+        selectedPlan?.main_live_benefit?.hospitalization_ipd_healthcare_included
+      ) {
+        types.push("hospitalization");
+      }
+
+      setClaimTypes(types);
+    };
+
     getAllClaims();
+    fetchPlans();
   }, []);
 
   const getPolicyData = {
@@ -589,7 +622,29 @@ function ClaimsCenter() {
                     <SelectValue placeholder="Select claim type..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="death">
+                    {claimTypes?.map((type) => {
+                      if (type === "death") {
+                        return (
+                          <SelectItem key={type} value="death">
+                            Death Benefit (Primary/Secondary Life)
+                          </SelectItem>
+                        );
+                      } else if (type === "tpd") {
+                        return (
+                          <SelectItem key={type} value="tpd">
+                            Total & Permanent Disability (TPD) Benefit
+                          </SelectItem>
+                        );
+                      } else if (type === "hospitalization") {
+                        return (
+                          <SelectItem key={type} value="hospitalization">
+                            Hospitalization Benefit
+                          </SelectItem>
+                        );
+                      }
+                      return null; // or handle other types if necessary
+                    })}
+                    {/* <SelectItem value="death">
                       Death Benefit (Primary/Secondary Life)
                     </SelectItem>
                     <SelectItem value="tpd">
@@ -597,7 +652,7 @@ function ClaimsCenter() {
                     </SelectItem>
                     <SelectItem value="hospitalization">
                       Hospitalization Benefit
-                    </SelectItem>
+                    </SelectItem> */}
                   </SelectContent>
                 </Select>
               </ClaimSection>
@@ -1078,13 +1133,13 @@ function ClaimsCenter() {
               </>
             )}
             <div className="grid grid-cols-2 gap-5">
-            <p className="flex flex-row">
-              <strong className="flex flex-row w-[12vw]">
-                <Circle />
-                Status:
-              </strong>{" "}
-              <span
-                className={`px-2 py-1 text-xs font-semibold rounded-full
+              <p className="flex flex-row">
+                <strong className="flex flex-row w-[12vw]">
+                  <Circle />
+                  Status:
+                </strong>{" "}
+                <span
+                  className={`px-2 py-1 text-xs font-semibold rounded-full
               ${
                 selectedClaim?.status?.toLowerCase() === "approved" ||
                 selectedClaim?.status?.toLowerCase() === "verified"
@@ -1093,18 +1148,17 @@ function ClaimsCenter() {
                   ? "bg-yellow-100 text-yellow-800"
                   : "bg-red-100 text-red-800"
               }`}
-              >
-                {selectedClaim?.status || "-"}
-              </span>
-            </p>
-            <p className="flex flex-row">
-              <strong className="flex flex-row w-[12vw]">
-                <Banknote />
-                Amount:
-              </strong>{" "}
-              GHS {selectedClaim.amount || "0"}
-            </p>
-
+                >
+                  {selectedClaim?.status || "-"}
+                </span>
+              </p>
+              <p className="flex flex-row">
+                <strong className="flex flex-row w-[12vw]">
+                  <Banknote />
+                  Amount:
+                </strong>{" "}
+                GHS {selectedClaim.amount || "0"}
+              </p>
             </div>
             {/* Claim Documents */}
             <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
