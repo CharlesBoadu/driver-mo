@@ -254,6 +254,10 @@ function ClaimsCenter() {
         types.push("hospitalization");
       }
 
+      if (selectedPlan?.main_live_benefit?.hospital_cash_included) {
+        types.push("hospital_cash");
+      }
+
       setClaimTypes(types);
     };
 
@@ -638,7 +642,13 @@ function ClaimsCenter() {
                       } else if (type === "hospitalization") {
                         return (
                           <SelectItem key={type} value="hospitalization">
-                            Hospitalization Benefit
+                            IPD & Hospital Cash / Income Replacement
+                          </SelectItem>
+                        );
+                      } else if (type === "hospital_cash") {
+                        return (
+                          <SelectItem key={type} value="hospital_cash">
+                            Hospital Cash / Income Replacement
                           </SelectItem>
                         );
                       }
