@@ -325,6 +325,28 @@ function ClaimsCenter() {
       const user = JSON.parse(localStorage.getItem("clientDetails"));
       const docs = formDetails?.documents || {};
 
+      if (claimType === "death" && !isDeathDocsComplete) {
+        toast({
+          title: "Incomplete Documents",
+          description:
+            "Please upload all required documents for Death Benefit claim.",
+          variant: "destructive",
+        });
+        setFileLoading(false);
+        return;
+      }
+
+      if (claimType === "ipd-hospital_cash" && !isHospitalizationDocsComplete) {
+        toast({
+          title: "Incomplete Documents",
+          description:
+            "Please upload all required documents for IPD & Hospital Cash / Income Replacement Benefit claim.",
+          variant: "destructive",
+        });
+        setFileLoading(false);
+        return;
+      }
+
       const finalValues = {
         creator_id: user?.id,
         claim_type: formDetails?.claim_type,
@@ -346,9 +368,20 @@ function ClaimsCenter() {
         medical_reports: docs?.doc_medical_report_death?.url || "",
         proof_of_relationship: docs?.doc_policyholder_id?.url || "",
         police_report: docs?.doc_police_report?.url || "",
-        incident_date: formDetails?.incident_date,
+        incident_date:
+          formDetails?.incident_date || new Date().toISOString().split("T")[0],
         contact_person_number: formDetails?.contact_person_number,
+        admission_date: formDetails?.admission_date || "",
+        discharge_date: formDetails?.discharge_date || "",
+        diagnosis: formDetails?.diagnosis || "",
+        hospital_name: formDetails?.hospital_name || "",
+        total_bill_amount: formDetails?.total_bill_amount || "",
+        hospital_bill: docs?.hospital_bill?.url || "",
+        excuse_duty: docs?.excuse_duty?.url || "",
+        other_reports: docs?.other_report?.url || "",
+        payment_receipts: docs?.payment_receipt?.url || "",
       };
+
       const response = await claimsApi.fileNewClaim(finalValues);
 
       if (response?.code === "GS200" || response?.code === "GS201") {
@@ -441,6 +474,10 @@ function ClaimsCenter() {
         { key: "medical_reports", label: "Medical Reports" },
         { key: "proof_of_relationship", label: "Proof of Relationship" },
         { key: "police_report", label: "Police Report" },
+        { key: "hospital_bill", label: "Hospital Bill Report" },
+        { key: "excuse_duty", label: "Excuse Duty Report" },
+        { key: "payment_receipts", label: "Payment Receipt Report" },
+        { key: "other_reports", label: "Other Report" },
       ];
 
       return documentMap
@@ -498,15 +535,21 @@ function ClaimsCenter() {
 
   const isDeathDocsComplete =
     formDetails?.documents?.doc_death_cert?.url &&
-    formDetails?.documents?.doc_policyholder_id?.url;
+    formDetails?.documents?.doc_policyholder_id?.url &&
+    formDetails?.documents?.doc_medical_report_death?.url &&
+    formDetails?.documents?.doc_police_report?.url;
 
   const isHospitalizationDocsComplete =
-    formDetails?.documents?.doc_death_cert?.url &&
-    formDetails?.documents?.doc_policyholder_id?.url;
+    formDetails?.documents?.hospital_bill?.url &&
+    formDetails?.documents?.excuse_duty?.url &&
+    formDetails?.documents?.payment_receipt?.url;
 
   const isTpdDocsComplete =
     formDetails?.documents?.doc_death_cert?.url &&
-    formDetails?.documents?.doc_policyholder_id?.url;
+    formDetails?.documents?.doc_policyholder_id?.url &&
+    formDetails?.documents?.doc_tpd_cert?.url &&
+    formDetails?.documents?.doc_diagnostic?.url &&
+    formDetails?.documents?.doc_employment?.url;
 
   // console.log("Selected claim", selectedClaim);
   // console.log("Form Details", formDetails);
@@ -641,7 +684,7 @@ function ClaimsCenter() {
                         );
                       } else if (type === "hospitalization") {
                         return (
-                          <SelectItem key={type} value="hospitalization">
+                          <SelectItem key={type} value="ipd-hospital_cash">
                             IPD & Hospital Cash / Income Replacement
                           </SelectItem>
                         );
@@ -745,42 +788,52 @@ function ClaimsCenter() {
                     </div>
                   </ClaimSection>
 
-                  {claimType === "death" && (
-                    <ClaimSection title="3. Death Benefit Claim Section">
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                          <label htmlFor="incidentDate">Incident Date</label>
-                          <InputWithIcon
-                            icon={Calendar}
-                            type="date"
-                            placeholder="Date of Death"
-                            value={formDetails.incident_date || ""}
-                            onChange={handleInputChange("incident_date")}
-                          />
-                        </div>
-                        <div>
-                          <label htmlFor="causeOfDeath">Cause of Death</label>
-                          <InputWithIcon
-                            icon={Heart}
-                            placeholder="Cause of Death"
-                            value={formDetails.cause_of_death || ""}
-                            onChange={handleInputChange("cause_of_death")}
-                          />
-                        </div>
-                        <div>
-                          <label htmlFor="placeOfDeath">Place of Death</label>
+                  {(claimType === "death" || claimType === "hospital_cash") && (
+                    <ClaimSection
+                      title={`3. ${
+                        claimType === "death"
+                          ? "Death Benefit Claim"
+                          : "Hospital Cash / Income Replacement"
+                      } Claim Section`}
+                    >
+                      {claimType === "death" && (
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div>
+                            <label htmlFor="incidentDate">Incident Date</label>
+                            <InputWithIcon
+                              icon={Calendar}
+                              type="date"
+                              placeholder="Date of Death"
+                              value={formDetails.incident_date || ""}
+                              onChange={handleInputChange("incident_date")}
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor="causeOfDeath">Cause of Death</label>
+                            <InputWithIcon
+                              icon={Heart}
+                              placeholder="Cause of Death"
+                              value={formDetails.cause_of_death || ""}
+                              onChange={handleInputChange("cause_of_death")}
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor="placeOfDeath">Place of Death</label>
 
-                          <InputWithIcon
-                            icon={MapPin}
-                            placeholder="Place of Death (Hospital/Home/Accident, etc.)"
-                            value={formDetails.place_of_death || ""}
-                            onChange={handleInputChange("place_of_death")}
-                          />
+                            <InputWithIcon
+                              icon={MapPin}
+                              placeholder="Place of Death (Hospital/Home/Accident, etc.)"
+                              value={formDetails.place_of_death || ""}
+                              onChange={handleInputChange("place_of_death")}
+                            />
+                          </div>
                         </div>
-                      </div>
+                      )}
+
+                      {/* Required Documents */}
                       <div>
-                        <h4 className="font-medium mb-2 mt-4">
-                          Required Documents
+                        <h4 className="text-lg font-bold text-gray-600 border-t-[1px] py-6">
+                          4. Required Documents
                         </h4>
                         <div className="grid sm:grid-cols-2 gap-2">
                           <DocumentUploader
@@ -864,18 +917,18 @@ function ClaimsCenter() {
                           />
                           <DocumentUploader
                             id="other_document"
-                            label="Any Other Document"
+                            label="Any Other Report"
                             checked={
-                              !!formDetails.documents?.other_document?.required
+                              !!formDetails.documents?.other_report?.required
                             }
                             fileName={
-                              formDetails.documents?.other_document?.file?.name
+                              formDetails.documents?.other_report?.file?.name
                             }
                             onCheckedChange={(checked) =>
-                              handleDocumentCheck("other_document", checked)
+                              handleDocumentCheck("other_report", checked)
                             }
                             onFileChange={(file) =>
-                              handleDocumentFile("other_document", file)
+                              handleDocumentFile("other_report", file)
                             }
                           />
                         </div>
@@ -926,8 +979,8 @@ function ClaimsCenter() {
                     </ClaimSection>
                   )}
 
-                  {claimType === "hospitalization" && (
-                    <ClaimSection title="5. Hospitalization Benefit Claim Section">
+                  {claimType === "ipd-hospital_cash" && (
+                    <ClaimSection title="3. IPD & Hospital Cash / Income Replacement Claim Section">
                       <div className="grid md:grid-cols-2 gap-4">
                         <div>
                           <label htmlFor="admissionDate">Admission Date</label>
@@ -935,6 +988,8 @@ function ClaimsCenter() {
                             icon={Calendar}
                             type="date"
                             placeholder="Admission Date"
+                            value={formDetails.admission_date || ""}
+                            onChange={handleInputChange("admission_date")}
                           />
                         </div>
                         <div>
@@ -944,6 +999,8 @@ function ClaimsCenter() {
                             icon={Calendar}
                             type="date"
                             placeholder="Discharge Date"
+                            value={formDetails.discharge_date || ""}
+                            onChange={handleInputChange("discharge_date")}
                           />
                         </div>
                         <div>
@@ -952,6 +1009,8 @@ function ClaimsCenter() {
                           <InputWithIcon
                             icon={ShieldCheck}
                             placeholder="Diagnosis"
+                            value={formDetails.diagnosis || ""}
+                            onChange={handleInputChange("diagnosis")}
                           />
                         </div>
                         <div>
@@ -960,6 +1019,8 @@ function ClaimsCenter() {
                           <InputWithIcon
                             icon={Building}
                             placeholder="Hospital Name"
+                            value={formDetails.hospital_name || ""}
+                            onChange={handleInputChange("hospital_name")}
                           />
                         </div>
                         <div>
@@ -971,25 +1032,81 @@ function ClaimsCenter() {
                             icon={HandCoins}
                             type="number"
                             placeholder="Total Bill Amount"
+                            value={formDetails.total_bill_amount || ""}
+                            onChange={handleInputChange("total_bill_amount")}
                           />
                         </div>
                       </div>
+
+                      {/* Required Documents */}
                       <div>
-                        <h4 className="font-medium mb-2 mt-4">
-                          Required Documents
+                        <h4 className="border-t-[1px] py-4 font-bold text-lg text-gray-600 mb-2 mt-4">
+                          4. Required Documents
                         </h4>
                         <div className="grid sm:grid-cols-2 gap-2">
                           <DocumentUploader
                             id="doc_discharge"
-                            label="Hospital Discharge Summary"
+                            label="Hospital Bill"
+                            checked={
+                              !!formDetails.documents?.hospital_bill?.required
+                            }
+                            fileName={
+                              formDetails.documents?.hospital_bill?.file?.name
+                            }
+                            onCheckedChange={(checked) =>
+                              handleDocumentCheck("hospital_bill", checked)
+                            }
+                            onFileChange={(file) =>
+                              handleDocumentFile("hospital_bill", file)
+                            }
                           />
                           <DocumentUploader
                             id="doc_bills"
-                            label="Itemized Medical Bills"
+                            label="Excuse Duty"
+                            checked={
+                              !!formDetails.documents?.excuse_duty?.required
+                            }
+                            fileName={
+                              formDetails.documents?.excuse_duty?.file?.name
+                            }
+                            onCheckedChange={(checked) =>
+                              handleDocumentCheck("excuse_duty", checked)
+                            }
+                            onFileChange={(file) =>
+                              handleDocumentFile("excuse_duty", file)
+                            }
                           />
                           <DocumentUploader
                             id="doc_receipts"
-                            label="Payment Receipts"
+                            label="Payment Receipt"
+                            checked={
+                              !!formDetails.documents?.payment_receipt?.required
+                            }
+                            fileName={
+                              formDetails.documents?.payment_receipt?.file?.name
+                            }
+                            onCheckedChange={(checked) =>
+                              handleDocumentCheck("payment_receipt", checked)
+                            }
+                            onFileChange={(file) =>
+                              handleDocumentFile("payment_receipt", file)
+                            }
+                          />
+                          <DocumentUploader
+                            id="doc_receipts"
+                            label="Any Other Report"
+                            checked={
+                              !!formDetails.documents?.other_report?.required
+                            }
+                            fileName={
+                              formDetails.documents?.other_report?.file?.name
+                            }
+                            onCheckedChange={(checked) =>
+                              handleDocumentCheck("other_report", checked)
+                            }
+                            onFileChange={(file) =>
+                              handleDocumentFile("other_report", file)
+                            }
                           />
                         </div>
                       </div>
@@ -1031,11 +1148,7 @@ function ClaimsCenter() {
                       <Button
                         type="submit"
                         className="w-full md:w-auto"
-                        disabled={
-                          !formDetails.declaration
-                          // ||
-                          // (claimType === "death" && !isDeathDocsComplete)
-                        }
+                        disabled={!formDetails.declaration}
                       >
                         Submit Claim <ChevronsRight className="w-4 h-4 ml-2" />
                       </Button>
